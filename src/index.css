@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-primary: #3b82f6;
+  --color-primary-light: #60a5fa;
+  --color-primary-dark: #2563eb;
+  
+  /* Monday Dark Theme Colors */
+  --color-surface-dark: #21233d;
+  --color-background-dark: #1d1f35;
+  --color-sidebar-dark: #181b34;
+  --color-active-dark: #1e2d4d;
+  --color-border-dark: #323338;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    @apply font-sans antialiased text-gray-900 bg-gray-50 dark:bg-background-dark dark:text-gray-100 transition-colors duration-200;
+  }
+}
