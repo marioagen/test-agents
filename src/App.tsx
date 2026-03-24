@@ -18,7 +18,7 @@ function DesignSystem() {
   return (
     <>
       <div className="mb-12">
-        <h1 className="text-3xl font-bold mb-4">Woopi AI Design System aula</h1>
+        <h1 className="text-3xl font-bold mb-4">Design System</h1>
         <p className="text-gray-600 dark:text-gray-400 max-w-2xl">
           Este é o guia de estilos oficial do Woopi AI. Ele contém todos os componentes, 
           cores, tipografia e padrões de interface que devem ser utilizados na construção 

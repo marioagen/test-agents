@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Home, Layers, Wrench, Users } from 'lucide-react';
+import { Moon, Sun, Home, Layers, Wrench, Users, FileText } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -18,7 +18,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-sidebar-dark border-b border-gray-200 dark:border-border-dark flex items-center justify-between px-6 z-50 transition-colors">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold">W</div>
+          <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-white">
+            <FileText className="w-5 h-5" />
+          </div>
           <span className="font-bold text-lg">Woopi AI</span>
         </div>
         <button 
