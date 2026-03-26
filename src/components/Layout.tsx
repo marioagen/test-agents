@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Home, Layers, Wrench, Users, FileText } from 'lucide-react';
+import { Moon, Sun, Home, Layers, Wrench, Users, FileText, AlertTriangle } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -36,6 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <nav className="p-4 space-y-2">
           <SidebarItem icon={<Home className="w-5 h-5" />} label="Design System" to="/" />
           <SidebarItem icon={<Users className="w-5 h-5" />} label="Agentes" to="/agentes" />
+          <SidebarItem icon={<AlertTriangle className="w-5 h-5" />} label="Falhas" to="/falhas" />
           <SidebarItem icon={<Layers className="w-5 h-5" />} label="Documents" to="/documents" />
           <SidebarItem icon={<Wrench className="w-5 h-5" />} label="Style Guide" to="/style-guide" />
         </nav>

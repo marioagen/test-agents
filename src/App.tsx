@@ -13,6 +13,7 @@ import Tables from './components/sections/Tables';
 import Icons from './components/sections/Icons';
 import Agents from './pages/Agents';
 import AgentForm from './pages/AgentForm';
+import Failures from './pages/Failures';
 
 function DesignSystem() {
   return (
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/agentes" element={<Agents />} />
           <Route path="/agentes/novo" element={<AgentForm />} />
           <Route path="/agentes/:id" element={<AgentForm />} />
+          <Route path="/falhas" element={<Failures />} />
         </Routes>
       </Layout>
     </Router>
