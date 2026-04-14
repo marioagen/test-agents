@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Home, Layers, Wrench, Users, FileText, AlertTriangle } from 'lucide-react';
+import { Moon, Sun, Home, Layers, Wrench, Users, FileText, AlertTriangle, LayoutDashboard } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -34,6 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-sidebar-dark border-r border-gray-200 dark:border-border-dark hidden md:block z-40 transition-colors">
         <nav className="p-4 space-y-2">
+          <SidebarItem icon={<LayoutDashboard className="w-5 h-5" />} label="Dashboard" to="/dashboard" />
           <SidebarItem icon={<Home className="w-5 h-5" />} label="Design System" to="/" />
           <SidebarItem icon={<Users className="w-5 h-5" />} label="Agentes" to="/agentes" />
           <SidebarItem icon={<AlertTriangle className="w-5 h-5" />} label="Falhas" to="/falhas" />

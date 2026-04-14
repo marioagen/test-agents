@@ -14,6 +14,7 @@ import Icons from './components/sections/Icons';
 import Agents from './pages/Agents';
 import AgentForm from './pages/AgentForm';
 import Failures from './pages/Failures';
+import Dashboard from './pages/Dashboard';
 
 function DesignSystem() {
   return (
@@ -49,6 +50,7 @@ export default function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<DesignSystem />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/agentes" element={<Agents />} />
           <Route path="/agentes/novo" element={<AgentForm />} />
           <Route path="/agentes/:id" element={<AgentForm />} />
