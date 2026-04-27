@@ -3,27 +3,29 @@ import React from 'react';
 export default function Colors() {
   return (
     <section className="bg-white dark:bg-surface-dark p-8 rounded-lg border border-gray-200 dark:border-border-dark transition-colors">
-      <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-gray-100 dark:border-border-dark">Cores do Sistema</h2>
+      <div className="mb-6 pb-4 border-b border-gray-100 dark:border-border-dark">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Cores do Sistema</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Paleta de cores baseada no Woopi-AI</p>
+      </div>
       
       <div className="space-y-8">
         <div>
-          <h3 className="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Cores Base</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <ColorSwatch color="bg-primary" name="Primary" hex="#3b82f6" />
-            <ColorSwatch color="bg-primary-light" name="Primary Light" hex="#60a5fa" />
-            <ColorSwatch color="bg-primary-dark" name="Primary Dark" hex="#2563eb" />
-            <ColorSwatch color="bg-gray-900" name="Gray 900" hex="#111827" />
-            <ColorSwatch color="bg-gray-500" name="Gray 500" hex="#6b7280" />
-            <ColorSwatch color="bg-gray-100" name="Gray 100" hex="#f3f4f6" />
-            <ColorSwatch color="bg-red-500" name="Error" hex="#ef4444" />
-            <ColorSwatch color="bg-green-500" name="Success" hex="#22c55e" />
-            <ColorSwatch color="bg-yellow-500" name="Warning" hex="#eab308" />
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <ColorSwatch color="bg-primary" name="Woopi-AI Blue" hex="#0073ea" />
+            <ColorSwatch color="bg-primary-light" name="Light Blue" hex="#e1e9f8" />
+            <ColorSwatch color="bg-primary-dark" name="Dark Blue" hex="#0060c7" />
+            <ColorSwatch color="bg-success" name="Success" hex="#00d2d2" />
+            <ColorSwatch color="bg-warning" name="Warning" hex="#ffcb00" />
+            <ColorSwatch color="bg-orange" name="Orange" hex="#fd7e14" />
+            <ColorSwatch color="bg-error" name="Error" hex="#d83a52" />
+            <ColorSwatch color="bg-dark-gray" name="Dark Gray" hex="#323338" />
+            <ColorSwatch color="bg-gray" name="Gray" hex="#676879" />
           </div>
         </div>
 
         <div>
           <h3 className="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Cores Dark Mode (Monday CRM)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             <ColorSwatch color="bg-background-dark" name="Background Dark" hex="#1d1f35" />
             <ColorSwatch color="bg-sidebar-dark" name="Sidebar Dark" hex="#181b34" />
             <ColorSwatch color="bg-surface-dark" name="Surface Dark" hex="#21233d" />
@@ -39,9 +41,9 @@ export default function Colors() {
 function ColorSwatch({ color, name, hex }: { color: string, name: string, hex: string }) {
   return (
     <div className="space-y-2">
-      <div className={`h-20 ${color} rounded border border-gray-100 dark:border-border-dark`}></div>
-      <p className="text-xs font-bold dark:text-white">{name}</p>
-      <p className="text-[10px] text-gray-400">{hex}</p>
+      <div className={`h-24 ${color} rounded-md border border-gray-100 dark:border-border-dark shadow-sm`}></div>
+      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{name}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{hex}</p>
     </div>
   );
 }

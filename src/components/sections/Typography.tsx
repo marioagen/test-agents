@@ -6,32 +6,37 @@ export default function Typography() {
       <h2 className="text-lg font-semibold mb-6 pb-2 border-b border-gray-100 dark:border-border-dark">Tipografia</h2>
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-bold text-gray-400 mb-4 uppercase tracking-wider">Títulos</p>
+          <p className="text-xs font-bold text-gray-400 mb-4 uppercase tracking-wider">Hierarquia de Títulos</p>
           <div className="space-y-4">
             <div>
-              <h1 className="text-[32px] font-medium leading-tight dark:text-white">Título Principal (H1)</h1>
-              <p className="text-[10px] text-gray-400">32px, font-weight: 500, gray-900</p>
+              <h1>Título Principal (H1)</h1>
+              <p className="text-[10px] text-gray-400 mt-1">32px, font-weight: 500, woopi-ai-dark-gray</p>
             </div>
             <div>
-              <h2 className="text-[24px] font-medium leading-tight dark:text-white">Título Secundário (H2)</h2>
-              <p className="text-[10px] text-gray-400">24px, font-weight: 500, gray-900</p>
+              <h2>Título Secundário (H2)</h2>
+              <p className="text-[10px] text-gray-400 mt-1">24px, font-weight: 500, woopi-ai-dark-gray</p>
             </div>
             <div>
-              <h3 className="text-[20px] font-medium leading-tight dark:text-white">Título Terciário (H3)</h3>
-              <p className="text-[10px] text-gray-400">20px, font-weight: 500, gray-900</p>
+              <h3>Título Terciário (H3)</h3>
+              <p className="text-[10px] text-gray-400 mt-1">20px, font-weight: 500, woopi-ai-dark-gray</p>
             </div>
             <div>
-              <h4 className="text-[16px] font-medium leading-tight dark:text-white">Título Quaternário (H4)</h4>
-              <p className="text-[10px] text-gray-400">16px, font-weight: 500, gray-900</p>
+              <h4>Título Quaternário (H4)</h4>
+              <p className="text-[10px] text-gray-400 mt-1">16px, font-weight: 500, woopi-ai-dark-gray</p>
             </div>
           </div>
         </div>
         <div>
-          <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Corpo de Texto</p>
-          <p className="text-sm text-gray-600 max-w-2xl leading-relaxed">
-            Texto de parágrafo regular usado para descrições e conteúdo geral do sistema. <br/>
-            <span className="text-[10px] text-gray-400 italic">14px, font-weight: 400, gray-600</span>
+          <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Texto Comum</p>
+          <p className="max-w-2xl leading-relaxed">
+            Texto de parágrafo regular usado para descrições e conteúdo geral do sistema.
           </p>
+          <p className="text-[10px] text-gray-400 italic mt-1">14px, font-weight: 400, woopi-ai-gray</p>
+          
+          <p className="max-w-2xl leading-relaxed font-medium text-woopi-dark-gray dark:text-gray-200 mt-4">
+            Texto de parágrafo com ênfase (Medium).
+          </p>
+          <p className="text-[10px] text-gray-400 italic mt-1">14px, font-weight: 500, woopi-ai-dark-gray</p>
         </div>
       </div>
     </section>
