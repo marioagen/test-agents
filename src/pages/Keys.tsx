@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Plus, X } from 'lucide-react';
+import { Copy, Plus, X, Trash2 } from 'lucide-react';
 
 interface KeyToken {
   id: string;
@@ -21,6 +21,7 @@ export default function Keys() {
   const [keys, setKeys] = useState<KeyToken[]>(initialKeys);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
 
   const toggleSelectAll = () => {
@@ -64,9 +65,14 @@ export default function Keys() {
     setIsModalOpen(false);
   };
 
+  const confirmDeleteSelected = () => {
+    setIsDeleteModalOpen(true);
+  };
+
   const handleDeleteSelected = () => {
     setKeys(keys.filter(k => !selectedKeys.has(k.id)));
     setSelectedKeys(new Set());
+    setIsDeleteModalOpen(false);
   };
 
   const getMaskedValue = (value: string) => {
@@ -85,8 +91,8 @@ export default function Keys() {
         <div className="flex gap-3">
           {selectedKeys.size > 0 && (
             <button 
-              onClick={handleDeleteSelected}
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              onClick={confirmDeleteSelected}
+              className="flex items-center gap-2 bg-error hover:bg-error/90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Excluir selecionados ({selectedKeys.size})
             </button>
@@ -198,6 +204,40 @@ export default function Keys() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-md p-8 text-center flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6">
+              <Trash2 className="w-8 h-8 text-error" />
+            </div>
+            
+            <h2 className="text-[24px] font-medium text-woopi-dark-gray dark:text-white leading-tight mb-4">
+              Você está prestes a deletar as chaves selecionadas do sistema
+            </h2>
+            
+            <p className="text-[14px] text-woopi-gray dark:text-gray-400 mb-8">
+              Esta ação não poderá ser desfeita.
+            </p>
+            
+            <div className="flex justify-center gap-4 w-full">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="flex-1 py-3 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteSelected}
+                className="flex-1 py-3 px-4 bg-primary hover:bg-primary-dark text-white rounded-md font-medium transition-colors"
+              >
+                Confirmar
+              </button>
+            </div>
           </div>
         </div>
       )}
