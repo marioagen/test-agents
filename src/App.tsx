@@ -16,6 +16,7 @@ import AgentForm from './pages/AgentForm';
 import Failures from './pages/Failures';
 import Dashboard from './pages/Dashboard';
 import Keys from './pages/Keys';
+import Audit from './pages/Audit';
 
 function DesignSystem() {
   return (
@@ -57,6 +58,8 @@ export default function App() {
           <Route path="/agentes/novo" element={<AgentForm />} />
           <Route path="/agentes/:id" element={<AgentForm />} />
           <Route path="/falhas" element={<Failures />} />
+          <Route path="/auditoria" element={<Audit />} />
+          <Route path="/documents" element={<div className="p-8"><h1 className="text-2xl font-bold dark:text-white">Documents</h1><p className="text-gray-500 dark:text-gray-400 mt-2">Página em construção</p></div>} />
         </Routes>
       </Layout>
     </Router>
