@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Copy, Sparkles, Plug, Search, Play, Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Copy, Sparkles, Plug, Search, Play, Loader2, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function AgentForm() {
   const navigate = useNavigate();
   const [description, setDescription] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [promptContent, setPromptContent] = useState('');
   const [contextText, setContextText] = useState('');
   const [testOutput, setTestOutput] = useState('');
@@ -18,6 +20,21 @@ export default function AgentForm() {
     { id: '3', name: 'Validate Document', method: 'POST', url: 'https://api.example.com/v1/docs/validate' },
     { id: '4', name: 'Fetch Contract Data', method: 'GET', url: 'https://api.example.com/v1/contracts' },
   ];
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
+  const addTag = () => {
+    const newTag = tagInput.trim();
+    if (newTag && !tags.includes(newTag)) {
+      setTags([...tags, newTag]);
+    }
+    setTagInput('');
+  };
 
   const toggleEndpoint = (id: string) => {
     setSelectedEndpoints(prev => 
@@ -93,9 +110,53 @@ export default function AgentForm() {
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-surface-dark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
-                <div className="text-right text-xs text-gray-400 mt-1">
+                <div className="text-right text-xs text-gray-400 mt-1 mb-4">
                   {description.length}/500
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tags
+                </label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Adicionar nova tag" 
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleAddTag}
+                    className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-surface-dark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={addTag}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {tags.map((tag) => (
+                      <span 
+                        key={tag} 
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 shadow-sm"
+                      >
+                        {tag}
+                        <button 
+                          onClick={() => setTags(tags.filter(t => t !== tag))}
+                          className="text-gray-400 hover:text-red-500 transition-colors focus:outline-none"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Separe as tags com a tecla Enter ou clique no botão Adicionar.
+                </p>
               </div>
             </div>
           </div>

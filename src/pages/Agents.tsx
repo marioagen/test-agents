@@ -13,6 +13,15 @@ export default function Agents() {
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
   const [groupBy, setGroupBy] = useState<string>('');
 
+  const ownerNames: Record<string, string> = {
+    'CS': 'Carlos Silva',
+    'AO': 'Ana Oliveira',
+    'MC': 'Marcos Costa',
+    'RM': 'Rafael Martins',
+    'JS': 'João Santos',
+    'WA': 'Willian Alves'
+  };
+
   const agents = [
     {
       id: 1,
@@ -352,7 +361,10 @@ export default function Agents() {
                       <span className="text-blue-500 text-xs">criação - {agent.date}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500 dark:text-gray-400 text-xs">Proprietário:</span>
-                        <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-medium">
+                        <div 
+                          className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-medium"
+                          title={ownerNames[agent.owner] || agent.owner}
+                        >
                           {agent.owner}
                         </div>
                       </div>
@@ -427,7 +439,10 @@ export default function Agents() {
                         </td>
                         <td className="px-4 py-3 text-blue-500 whitespace-nowrap text-xs">{agent.date}</td>
                         <td className="px-4 py-3">
-                           <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-medium">
+                           <div 
+                             className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-medium"
+                             title={ownerNames[agent.owner] || agent.owner}
+                           >
                              {agent.owner}
                            </div>
                         </td>
