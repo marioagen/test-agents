@@ -221,7 +221,7 @@ export default function Agents() {
              >
                <option value="">Sem agrupamento</option>
                <option value="owner">Proprietário</option>
-               <option value="type">Tipo</option>
+               <option value="type">Tags</option>
              </select>
           </div>
           
@@ -251,7 +251,7 @@ export default function Agents() {
             {groupBy && (
               <h2 className="text-[13px] font-medium text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2 uppercase tracking-wide">
                 <span className="bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-md text-gray-600 dark:text-gray-400">
-                  {groupBy === 'owner' ? 'Proprietário' : 'Tipo'}: <span className="font-semibold">{groupKey === 'orange' ? 'Laranja' : groupKey === 'blue' ? 'Azul' : groupKey}</span>
+                  {groupBy === 'owner' ? 'Proprietário' : 'Tags'}: <span className="font-semibold">{groupKey === 'orange' ? 'Laranja' : groupKey === 'blue' ? 'Azul' : groupKey}</span>
                 </span>
                 <span className="text-gray-500 font-normal">({groupAgents.length})</span>
               </h2>
@@ -375,7 +375,7 @@ export default function Agents() {
                         <div className="flex items-center gap-1">Prompt {renderSortIcon('prompt')}</div>
                       </th>
                       <th className="px-4 py-3 font-medium cursor-pointer group whitespace-nowrap" onClick={() => handleSort('type')}>
-                        <div className="flex items-center gap-1">Tipo {renderSortIcon('type')}</div>
+                        <div className="flex items-center gap-1">Tags {renderSortIcon('type')}</div>
                       </th>
                       <th className="px-4 py-3 font-medium cursor-pointer group whitespace-nowrap" onClick={() => handleSort('date')}>
                         <div className="flex items-center gap-1">Criação {renderSortIcon('date')}</div>
