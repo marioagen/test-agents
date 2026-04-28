@@ -12,6 +12,7 @@ import Tabs from './components/sections/Tabs';
 import Tables from './components/sections/Tables';
 import Icons from './components/sections/Icons';
 import Agents from './pages/Agents';
+import ImportAgents from './pages/ImportAgents';
 import AgentForm from './pages/AgentForm';
 import Failures from './pages/Failures';
 import Dashboard from './pages/Dashboard';
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/chaves" element={<Keys />} />
           <Route path="/agentes" element={<Agents />} />
+          <Route path="/agentes/importar" element={<ImportAgents />} />
           <Route path="/agentes/novo" element={<AgentForm />} />
           <Route path="/agentes/:id" element={<AgentForm />} />
           <Route path="/falhas" element={<Failures />} />
