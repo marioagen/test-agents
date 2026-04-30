@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Home, Layers, Users, FileText, AlertTriangle, LayoutDashboard, Key, Wrench, ChevronDown, ChevronRight, ClipboardList, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Moon, Sun, Home, Layers, Users, FileText, AlertTriangle, LayoutDashboard, Key, Wrench, ChevronDown, ChevronRight, ClipboardList, ChevronLeft, Globe, Bell, User, LogOut, Settings } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [darkMode, setDarkMode] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -13,6 +15,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background-dark text-gray-900 dark:text-gray-100 antialiased transition-colors duration-200">
@@ -24,12 +36,55 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <span className="font-bold text-lg">Woopi AI</span>
         </div>
-        <button 
-          onClick={() => setDarkMode(!darkMode)}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-active-dark transition-colors"
-        >
-          {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
+        
+        <div className="flex items-center gap-4">
+          <button className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-active-dark rounded-full transition-colors">
+            <Globe className="w-5 h-5" />
+          </button>
+          
+          <button 
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-active-dark rounded-full transition-colors"
+          >
+            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          
+          <button className="p-2 relative text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-active-dark rounded-full transition-colors">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-2 right-2.5 w-2 h-2 bg-blue-500 border-2 border-white dark:border-background-dark rounded-full"></span>
+          </button>
+
+          <div className="relative" ref={profileRef}>
+            <button 
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-2 pl-2 pr-3 py-1.5 ml-2 hover:bg-gray-100 dark:hover:bg-active-dark rounded-full border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all font-medium text-sm"
+            >
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs shadow-sm">
+                JS
+              </div>
+              <span>João Silva</span>
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            </button>
+
+            {isProfileOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-sidebar-dark rounded-md shadow-lg py-1 border border-gray-200 dark:border-border-dark z-50">
+                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-active-dark transition-colors">
+                  <User className="w-4 h-4 text-gray-500" />
+                  Minha Conta
+                </button>
+                <NavLink to="/settings" onClick={() => setIsProfileOpen(false)} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-active-dark transition-colors">
+                  <Settings className="w-4 h-4 text-gray-500" />
+                  Configurações
+                </NavLink>
+                <div className="h-px bg-gray-200 dark:bg-border-dark my-1"></div>
+                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                  <LogOut className="w-4 h-4" />
+                  Sair
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </header>
 
       {/* Sidebar */}
@@ -53,7 +108,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <SidebarItem icon={<AlertTriangle className="w-5 h-5" />} label="Falhas" to="/falhas" isCollapsed={isCollapsed} />
           <SidebarItem icon={<Layers className="w-5 h-5" />} label="Documents" to="/documents" isCollapsed={isCollapsed} />
           <SidebarItem icon={<ClipboardList className="w-5 h-5" />} label="Auditoria" to="/auditoria" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Key className="w-5 h-5" />} label="Chaves" to="/chaves" isCollapsed={isCollapsed} />
         </nav>
       </aside>
 
