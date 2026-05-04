@@ -214,16 +214,20 @@ export default function Pipelines() {
     recebimento: true,
     verificacao: false,
     aprovacao: false,
-    concluido: true
+    concluido: false
   });
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const toggleGroup = (id: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+    setExpandedGroups(prev => {
+      const nextGroups: Record<string, boolean> = {};
+      Object.keys(prev).forEach(key => {
+        nextGroups[key] = false;
+      });
+      nextGroups[id] = !prev[id];
+      return nextGroups;
+    });
   };
 
   const toggleSelectItem = (id: string) => {
@@ -369,25 +373,21 @@ export default function Pipelines() {
                 </div>
                 documentos selecionados
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {Array.from(selectedItems).some(id => mockCards.find(c => c.id === id)?.column === 'concluido') && (
-                  <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors">
+                  <button title="Finalizar" className="flex items-center justify-center bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 border border-green-200 dark:border-green-800 p-2 rounded-md transition-colors">
                     <Check className="w-4 h-4" />
-                    Finalizar
                   </button>
                 )}
-                <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors">
+                <button title="Atribuir" className="flex items-center justify-center bg-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 border border-blue-200 dark:border-blue-800 p-2 rounded-md transition-colors">
                   <UserCheck className="w-4 h-4" />
-                  Atribuir
                 </button>
-                <button className="flex items-center gap-2 bg-[#EA001B] hover:bg-red-700 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors">
+                <button title="Reprovar" className="flex items-center justify-center bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 text-[#EA001B] border border-red-200 dark:border-red-800 p-2 rounded-md transition-colors">
                   <XCircle className="w-4 h-4" />
-                  Reprovar
                 </button>
                 <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1"></div>
-                <button className="flex items-center gap-2 bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 text-[#EA001B] border border-red-200 dark:border-red-800 px-4 py-1.5 rounded-md text-sm font-medium transition-colors">
+                <button title="Excluir" className="flex items-center justify-center bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 text-[#EA001B] border border-red-200 dark:border-red-800 p-2 rounded-md transition-colors">
                   <Trash2 className="w-4 h-4" />
-                  Excluir
                 </button>
               </div>
             </div>

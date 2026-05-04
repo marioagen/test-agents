@@ -107,6 +107,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           
           <SidebarItem icon={<AlertTriangle className="w-5 h-5" />} label="Falhas" to="/falhas" isCollapsed={isCollapsed} />
           <SidebarItem icon={<GitBranch className="w-5 h-5" />} label="Esteiras de processamento" to="/esteiras" isCollapsed={isCollapsed} />
+          <SidebarItem icon={<FileText className="w-5 h-5" />} label="Análise de extração" to="/analise-extracao" isCollapsed={isCollapsed} />
           <SidebarItem icon={<Layers className="w-5 h-5" />} label="Documents" to="/documents" isCollapsed={isCollapsed} />
           <SidebarItem icon={<ClipboardList className="w-5 h-5" />} label="Auditoria" to="/auditoria" isCollapsed={isCollapsed} />
         </nav>

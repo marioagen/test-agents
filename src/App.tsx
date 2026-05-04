@@ -19,6 +19,7 @@ import Dashboard from './pages/Dashboard';
 import Audit from './pages/Audit';
 import Settings from './pages/Settings';
 import Pipelines from './pages/Pipelines';
+import ExtractionAnalysis from './pages/ExtractionAnalysis';
 
 function DesignSystem() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/agentes/:id" element={<AgentForm />} />
           <Route path="/falhas" element={<Failures />} />
           <Route path="/esteiras" element={<Pipelines />} />
+          <Route path="/analise-extracao" element={<ExtractionAnalysis />} />
           <Route path="/auditoria" element={<Audit />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/documents" element={<div className="p-8"><h1 className="text-2xl font-bold dark:text-white">Documents</h1><p className="text-gray-500 dark:text-gray-400 mt-2">Página em construção</p></div>} />
