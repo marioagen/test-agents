@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Moon, Sun, Home, Layers, Users, FileText, AlertTriangle, LayoutDashboard, Key, Wrench, ChevronDown, ChevronRight, ClipboardList, ChevronLeft, Globe, Bell, User, LogOut, Settings } from 'lucide-react';
+import { Moon, Sun, Home, Layers, Users, FileText, AlertTriangle, LayoutDashboard, Key, Wrench, ChevronDown, ChevronRight, ClipboardList, ChevronLeft, Globe, Bell, User, LogOut, Settings, GitBranch } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -106,6 +106,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </SidebarGroup>
           
           <SidebarItem icon={<AlertTriangle className="w-5 h-5" />} label="Falhas" to="/falhas" isCollapsed={isCollapsed} />
+          <SidebarItem icon={<GitBranch className="w-5 h-5" />} label="Esteiras de processamento" to="/esteiras" isCollapsed={isCollapsed} />
           <SidebarItem icon={<Layers className="w-5 h-5" />} label="Documents" to="/documents" isCollapsed={isCollapsed} />
           <SidebarItem icon={<ClipboardList className="w-5 h-5" />} label="Auditoria" to="/auditoria" isCollapsed={isCollapsed} />
         </nav>
