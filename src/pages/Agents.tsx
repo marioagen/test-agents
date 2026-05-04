@@ -28,7 +28,7 @@ export default function Agents() {
       type: 'orange',
       title: 'Análise de Documentos Jurídicos',
       description: 'Prompt completo para revisar informações referentes a papéis jurídicos, processos extra judiciais, p...',
-      prompt: 'Prompt completo para revisar informações referentes a papéis jurídicos, processos extra judiciais, penalidades e conformidade com as normas legais vigentes no País. Analise detalhadamente cada parágrafo e identifique possíveis pontos de atenção, passivos ocultos e cláusulas abusivas.',
+      prompt: 'Prompt completo para revisar informações referentes a papéis jurídicos, processos extra judiciais, penalidades e conformidade com as normas legais vigentes no País.\n\nAnalise detalhadamente cada parágrafo e identifique possíveis pontos de atenção, passivos ocultos e cláusulas abusivas.\n\nInstruções detalhadas:\n1. Identifique o foro de eleição e verifique se é aplicável à jurisdição da nossa sede principal.\n2. Busque ativamente por multas rescisórias desproporcionais e qualquer cláusula que caracterize onerosidade excessiva.\n3. Verifique as condições de renovação automática e prazos para manifestação de não-renovação.\n4. Avalie o limite de responsabilidade (liabilities e indenizações) se estão adequados às nossas políticas internas.\n5. Leia a seção de confidencialidade (NDA) para garantir a cobertura completa durante e após a vigência do contrato.\n6. Procure se há obrigação de exclusividade que impessa novos negócios análogos com outros fornecedores ou parceiros.\n7. Valide a conformidade do documento com as normas da LGPD (Lei Geral de Proteção de Dados), em especial o consentimento para tratamento dos dados e indicações do encarregado de dados e base legal utilizada.\n8. Extraia a qualificação completa das partes: CNPJ, Razão Social, Endereço completo, Representantes Legais (com qualificação, CPF e cargo) e e-mail de contato para notificações formais.\n9. Documentos que não pertencerem a área jurídica ou contratos devem ser sinalizados como "Inválidos para análise".\n\nEssa análise precisa ser rigorosa. Liste apenas as não conformidades de alto e altíssimo risco e sugira a redação adequada baseada no novo código civil.\n\nSiga estritamente o formato de saída exigido no nosso manual de compliance.',
       date: '16/04/2025',
       owner: 'CS',
       hasEye: true,
@@ -46,38 +46,42 @@ export default function Agents() {
     {
       id: 3,
       type: 'orange',
-      title: 'Prompt Name',
+      title: 'Verificação de Nomes em Listas Restritivas',
       description: 'Item para revisar informações referentes a papéis jurídicos, extra judiciais, penalidades, etc',
+      prompt: 'Analise os nomes apresentados e cruze os dados com listas restritivas e PEP (Pessoas Politicamente Expostas). Identifique qualquer ocorrência que sinalize risco.',
       date: '16/04/2025',
       owner: 'CS',
-      hasEye: false,
+      hasEye: true,
     },
     {
       id: 4,
       type: 'orange',
-      title: 'Prompt Name',
+      title: 'Classificação de Incidentes Trabalhistas',
       description: 'Item para revisar informações referentes a papéis jurídicos, extra judiciais, penalidades, etc',
+      prompt: 'Classifique o incidente trabalhista descrito utilizando a matriz de risco da empresa. Defina gravidade, setor afetado e se há risco imediato de judicialização.',
       date: '16/04/2025',
       owner: 'MC',
-      hasEye: false,
+      hasEye: true,
     },
     {
       id: 5,
       type: 'orange',
-      title: 'Prompt Name',
+      title: 'Extração de Prazos Processuais',
       description: 'Item para revisar informações referentes a papéis jurídicos, extra judiciais, penalidades, etc',
+      prompt: 'Extraia todos os prazos legais e operacionais dos documentos de tribunal, formatando-os em uma lista com datas limites e a quem se destina a responsabilidade.',
       date: '16/04/2025',
       owner: 'RM',
-      hasEye: false,
+      hasEye: true,
     },
     {
       id: 6,
       type: 'orange',
-      title: 'Prompt Name',
+      title: 'Revisão de Cláusulas de Força Maior',
       description: 'Item para revisar informações referentes a papéis jurídicos, extra judiciais, penalidades, etc',
+      prompt: 'Verifique se o contrato possui ou menciona eventos que constituem força maior ou caso fortuito. Descreva como são tratadas essas exceções na vigência do acordo.',
       date: '16/04/2025',
       owner: 'JS',
-      hasEye: false,
+      hasEye: true,
     },
     {
       id: 7,
@@ -94,18 +98,20 @@ export default function Agents() {
       type: 'blue',
       title: '[Compliance] Verificação de Conformidade',
       description: 'Verificação de documentos para conformidade com normas regulatórias e políticas internas',
+      prompt: 'Cruze as informações do documento anexado com as normas regulatórias (ex.: Lei Anticorrupção) e aponte desvios encontrados, categorizando-os por severidade.',
       date: '10/01/2025',
       owner: 'WA',
-      hasEye: false,
+      hasEye: true,
     },
     {
       id: 9,
       type: 'blue',
       title: '[Financeiro] Extração de Dados Fiscais',
       description: 'Extração automática de informações fiscais de notas fiscais e documentos contábeis',
+      prompt: 'Identifique os dados fiscais da nota apresentada: CNPJ, I.E., UF de origem e destino, NCM dos produtos e total de tributos incidentes. Extraia em formato tabelado.',
       date: '08/01/2025',
       owner: 'WA',
-      hasEye: false,
+      hasEye: true,
     },
   ];
 
@@ -344,20 +350,28 @@ export default function Agents() {
                     </div>
                     
                     <div className="flex-1 mb-4 relative z-0">
-                      <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed line-clamp-2 inline">
+                      <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed mb-2">
                         {agent.description}
                       </p>
-                      {agent.hasEye && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setModalAgent(agent as any); }}
-                          className="inline-flex items-center ml-1 text-primary hover:text-primary-dark transition-colors"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-gray-400 hover:text-primary cursor-pointer align-middle" />
-                        </button>
+                      {agent.prompt && (
+                        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-md p-3 border border-gray-100 dark:border-gray-700">
+                          <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed line-clamp-2 italic mb-2">
+                            {agent.prompt}
+                          </p>
+                          {agent.hasEye && (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setModalAgent(agent as any); }}
+                              className="flex items-center gap-1.5 text-primary hover:text-primary-dark text-xs font-medium transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Ver prompt completo
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                     
-                    <div className="flex justify-between items-end mt-auto pt-4 border-t border-transparent relative z-0">
+                    <div className="flex justify-between items-end mt-auto border-t border-transparent relative z-0">
                       <span className="text-blue-500 text-xs">criação - {agent.date}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500 dark:text-gray-400 text-xs">Proprietário:</span>
