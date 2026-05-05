@@ -2,17 +2,54 @@ import React, { useState } from 'react';
 import { 
   ArrowLeft, History, LayoutPanelLeft, LayoutPanelRight, CheckCircle2, 
   XOctagon, XCircle, Filter, ShieldCheck, MessageCircle, ChevronLeft, ChevronRight, 
-  FileText, PenLine, ChevronDown, SplitSquareHorizontal, CheckCircle, HelpCircle, Columns, Sidebar, Square, PanelRight, Link
+  FileText, PenLine, ChevronDown, SplitSquareHorizontal, CheckCircle, HelpCircle, Columns, Sidebar, Square, PanelRight, Link, X
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 export default function ExtractionAnalysis() {
   const [activeStep, setActiveStep] = useState(1);
   const [showFieldHistory, setShowFieldHistory] = useState<Record<string, boolean>>({});
+  const [selectedVersion, setSelectedVersion] = useState("v3");
   const totalSteps = 6;
   
   const toggleHistory = (field: string) => {
     setShowFieldHistory(prev => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const versionsData: Record<string, any> = {
+    "v3": {
+      nf: "NF-2023-7845", nfStatus: "Versão atual v3", nfColor: "blue",
+      date: "10/03/2023", dateStatus: "Confirmado", dateColor: "green",
+      cnpj: "98.705.432/0001-10", cnpjStatus: "Confirmado", cnpjColor: "green",
+      razao: "Empresa ABC S.A.", razaoStatus: "Confirmado", razaoColor: "green",
+      valor: "R$ 15.420,00", valorStatus: "Editado", valorColor: "orange"
+    },
+    "v2": {
+      nf: "NF-2023-7840", nfStatus: "Versão v2", nfColor: "gray",
+      date: "10/03/2023", dateStatus: "Confirmado", dateColor: "green",
+      cnpj: "98.705.432/0001-10", cnpjStatus: "Atenção", cnpjColor: "red",
+      razao: "Empresa ABC S.A.", razaoStatus: "Confirmado", razaoColor: "green",
+      valor: "R$ 15.420,00", valorStatus: "Confirmado", valorColor: "green"
+    },
+    "v1": {
+      nf: "NF-2023-78", nfStatus: "Versão v1", nfColor: "gray",
+      date: "01/03/2023", dateStatus: "IA Extraiu", dateColor: "gray",
+      cnpj: "98.705.432/0001", cnpjStatus: "IA Extraiu", cnpjColor: "gray",
+      razao: "Empresa ABC", razaoStatus: "IA Extraiu", razaoColor: "gray",
+      valor: "15.420,00", valorStatus: "IA Extraiu", valorColor: "gray"
+    }
+  };
+  
+  const currentData = versionsData[selectedVersion];
+
+  const getBadgeColor = (color: string) => {
+    switch(color) {
+      case 'blue': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
+      case 'green': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+      case 'red': return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+      case 'orange': return 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400';
+      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400';
+    }
   };
   
   return (
@@ -160,10 +197,14 @@ export default function ExtractionAnalysis() {
                 </div>
                 <div className="relative flex items-center">
                   <History className="w-3.5 h-3.5 text-gray-500 absolute left-2.5 pointer-events-none" />
-                  <select className="appearance-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md pl-8 pr-8 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full">
-                    <option>v3 (Atual)</option>
-                    <option>v2 (Ontem, 14:30)</option>
-                    <option>v1 (Segunda, 09:15)</option>
+                  <select 
+                    value={selectedVersion}
+                    onChange={(e) => setSelectedVersion(e.target.value)}
+                    className="appearance-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md pl-8 pr-8 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full"
+                  >
+                    <option value="v3">v3 (Atual)</option>
+                    <option value="v2">v2 (Ontem, 14:30)</option>
+                    <option value="v1">v1 (Segunda, 09:15)</option>
                   </select>
                   <ChevronDown className="w-3.5 h-3.5 text-gray-500 absolute right-2.5 pointer-events-none" />
                 </div>
@@ -172,13 +213,13 @@ export default function ExtractionAnalysis() {
               <div className="p-5 space-y-6 bg-white dark:bg-surface-dark">
                 
                 {/* Field 1 */}
-                <div className="space-y-1.5 border border-blue-100 dark:border-blue-900/30 bg-blue-50/10 dark:bg-blue-900/5 rounded-lg p-4 -mx-4">
+                <div className={`space-y-1.5 ${selectedVersion === 'v3' ? 'border border-blue-100 dark:border-blue-900/30 bg-blue-50/10 dark:bg-blue-900/5 rounded-lg p-4 -mx-4' : ''}`}>
                   <div className="flex items-center justify-between mb-2">
                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Número da Nota Fiscal</label>
-                     <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">Versão atual v3</span>
+                     <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${getBadgeColor(currentData.nfColor)}`}>{currentData.nfStatus}</span>
                   </div>
                   <div className="relative">
-                    <input type="text" value="NF-2023-7845" readOnly className="w-full border border-blue-200 dark:border-blue-800/50 rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 bg-blue-50/30 dark:bg-blue-900/10 focus:outline-none ring-1 ring-blue-500/20" />
+                    <input type="text" value={currentData.nf} readOnly className={`w-full border rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 focus:outline-none ${selectedVersion === 'v3' ? 'border-blue-200 dark:border-blue-800/50 bg-blue-50/30 dark:bg-blue-900/10 ring-1 ring-blue-500/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'}`} />
                   </div>
                   
                   {/* Version History Toggle */}
@@ -188,26 +229,56 @@ export default function ExtractionAnalysis() {
                       className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 font-medium transition-colors"
                     >
                       <History className="w-3.5 h-3.5" />
-                      {showFieldHistory['nf'] ? 'Ocultar histórico' : 'Ver histórico (2 versões anteriores)'}
+                      Ver histórico (2 versões anteriores)
                     </button>
                     
-                    {/* History details */}
+                    {/* History Modal */}
                     {showFieldHistory['nf'] && (
-                      <div className="mt-4 pl-3 ml-1.5 border-l-2 border-gray-200 dark:border-gray-700 space-y-4">
-                         <div className="relative">
-                           <div className="absolute -left-[17px] top-1.5 w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600 ring-4 ring-white dark:ring-surface-dark"></div>
-                           <div className="text-[11px] text-gray-400 dark:text-gray-500 mb-1 font-medium uppercase tracking-wide">v2 • Ontem, 14:30 • Sistema</div>
-                           <div className="text-sm text-gray-500 dark:text-gray-400 line-through">NF-2023-7840</div>
-                         </div>
-                         <div className="relative">
-                           <div className="absolute -left-[17px] top-1.5 w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600 ring-4 ring-white dark:ring-surface-dark"></div>
-                           <div className="text-[11px] text-gray-400 dark:text-gray-500 mb-1 font-medium uppercase tracking-wide">v1 • Segunda, 09:15 • Sistema</div>
-                           <div className="text-sm text-gray-500 dark:text-gray-400 line-through">NF-2023-78</div>
-                           <div className="text-[11px] text-[#EA001B] mt-2 flex items-center gap-1.5 font-medium bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded inline-flex">
-                             <XCircle className="w-3.5 h-3.5" />
-                             Corrigido manualmente
-                           </div>
-                         </div>
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 animate-in fade-in duration-200">
+                        <div className="bg-white dark:bg-surface-dark w-full max-w-md rounded-xl shadow-xl flex flex-col max-h-[90vh]">
+                          {/* Modal Header */}
+                          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                            <div>
+                              <h3 className="font-semibold text-gray-900 dark:text-white">Histórico de Versões</h3>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Número da Nota Fiscal</p>
+                            </div>
+                            <button 
+                              onClick={() => toggleHistory('nf')}
+                              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                          
+                          {/* Modal Content / Timeline */}
+                          <div className="p-6 overflow-y-auto">
+                            <div className="pl-3 ml-1.5 border-l-2 border-gray-100 dark:border-gray-800 space-y-6">
+                               <div className="relative">
+                                 <div className="absolute -left-[17px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-white dark:ring-surface-dark"></div>
+                                 <div className="text-[11px] text-gray-400 dark:text-gray-500 mb-1 font-medium uppercase tracking-wide">v3 • Atual • Você</div>
+                                 <div className="text-sm font-medium text-gray-900 dark:text-white">NF-2023-7845</div>
+                                 <div className="text-[11px] text-green-600 dark:text-green-400 mt-1.5 flex items-center gap-1.5 font-medium bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded inline-flex">
+                                   <CheckCircle className="w-3.5 h-3.5" />
+                                   Aprovado
+                                 </div>
+                               </div>
+                               <div className="relative">
+                                 <div className="absolute -left-[17px] top-1.5 w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600 ring-4 ring-white dark:ring-surface-dark"></div>
+                                 <div className="text-[11px] text-gray-400 dark:text-gray-500 mb-1 font-medium uppercase tracking-wide">v2 • Ontem, 14:30 • Sistema IA</div>
+                                 <div className="text-sm text-gray-500 dark:text-gray-400 line-through">NF-2023-7840</div>
+                               </div>
+                               <div className="relative">
+                                 <div className="absolute -left-[17px] top-1.5 w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600 ring-4 ring-white dark:ring-surface-dark"></div>
+                                 <div className="text-[11px] text-gray-400 dark:text-gray-500 mb-1 font-medium uppercase tracking-wide">v1 • Segunda, 09:15 • Sistema IA</div>
+                                 <div className="text-sm text-gray-500 dark:text-gray-400 line-through">NF-2023-78</div>
+                                 <div className="text-[11px] text-[#EA001B] mt-2 flex items-center gap-1.5 font-medium bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded inline-flex">
+                                   <XCircle className="w-3.5 h-3.5" />
+                                   Corrigido na extração
+                                 </div>
+                               </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -217,10 +288,10 @@ export default function ExtractionAnalysis() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Data de Emissão</label>
-                     <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">Confirmado</span>
+                     <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${getBadgeColor(currentData.dateColor)}`}>{currentData.dateStatus}</span>
                   </div>
                   <div className="relative">
-                    <input type="text" defaultValue="10/03/2023" className="w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800/50 focus:outline-none focus:ring-1 focus:ring-blue-500 pr-9 hover:border-gray-300 transition-colors" />
+                    <input type="text" value={currentData.date} readOnly className="w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800/50 focus:outline-none focus:ring-1 focus:ring-blue-500 pr-9 hover:border-gray-300 transition-colors" />
                     <PenLine className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 </div>
@@ -229,10 +300,10 @@ export default function ExtractionAnalysis() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">CNPJ Destinatário</label>
-                     <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">Confirmado</span>
+                     <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${getBadgeColor(currentData.cnpjColor)}`}>{currentData.cnpjStatus}</span>
                   </div>
                   <div className="relative">
-                    <input type="text" value="98.705.432/0001-10" readOnly className="w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 focus:outline-none" />
+                    <input type="text" value={currentData.cnpj} readOnly className="w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 focus:outline-none" />
                   </div>
                 </div>
 
@@ -240,10 +311,10 @@ export default function ExtractionAnalysis() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Razão Social Destinatário</label>
-                     <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">Confirmado</span>
+                     <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${getBadgeColor(currentData.razaoColor)}`}>{currentData.razaoStatus}</span>
                   </div>
                   <div className="relative">
-                    <input type="text" defaultValue="Empresa ABC S.A." className="w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800/50 focus:outline-none focus:ring-1 focus:ring-blue-500 pr-9 hover:border-gray-300 transition-colors" />
+                    <input type="text" value={currentData.razao} readOnly className="w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800/50 focus:outline-none focus:ring-1 focus:ring-blue-500 pr-9 hover:border-gray-300 transition-colors" />
                     <PenLine className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 </div>
@@ -252,11 +323,11 @@ export default function ExtractionAnalysis() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Valor Total</label>
-                     <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">Editado</span>
+                     <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${getBadgeColor(currentData.valorColor)}`}>{currentData.valorStatus}</span>
                   </div>
                   <div className="relative">
-                    <input type="text" defaultValue="R$ 15.420,00" className="w-full border border-orange-300 dark:border-orange-500/50 rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 bg-orange-50/20 dark:bg-orange-900/10 focus:outline-none focus:ring-1 focus:ring-orange-500 pr-9 transition-colors" />
-                    <PenLine className="w-4 h-4 text-orange-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input type="text" value={currentData.valor} readOnly className={`w-full border rounded-md px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 focus:outline-none pr-9 transition-colors ${selectedVersion === 'v3' ? 'border-orange-300 dark:border-orange-500/50 bg-orange-50/20 dark:bg-orange-900/10 focus:ring-1 focus:ring-orange-500' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'}`} />
+                    <PenLine className={`w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${selectedVersion === 'v3' ? 'text-orange-500' : 'text-gray-400'}`} />
                   </div>
                 </div>
 
