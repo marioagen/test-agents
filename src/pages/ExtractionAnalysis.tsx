@@ -3,7 +3,7 @@ import {
   ArrowLeft, History, LayoutPanelLeft, LayoutPanelRight, CheckCircle2, 
   XOctagon, XCircle, Filter, ShieldCheck, MessageCircle, ChevronLeft, ChevronRight, 
   FileText, PenLine, ChevronDown, SplitSquareHorizontal, CheckCircle, HelpCircle, Columns, Sidebar, Square, PanelRight, Link, X,
-  Share2, Menu, Maximize2, MoreVertical, AlignRight, Download, Printer, RotateCw, Type, Focus, ZoomIn, ZoomOut, RotateCcw, Pencil, Search, CornerUpLeft, CornerUpRight
+  Share2, Menu, Maximize2, MoreVertical, AlignRight, Download, Printer, RotateCw, Type, Focus, ZoomIn, ZoomOut, RotateCcw, Pencil, Search, CornerUpLeft, CornerUpRight, ArrowRightLeft
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -12,6 +12,9 @@ export default function ExtractionAnalysis() {
   const [showFieldHistory, setShowFieldHistory] = useState<Record<string, boolean>>({});
   const [selectedVersion, setSelectedVersion] = useState("v3");
   const [showReprocessModal, setShowReprocessModal] = useState(false);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareVersion1, setCompareVersion1] = useState("v3");
+  const [compareVersion2, setCompareVersion2] = useState("v2");
   const totalSteps = 6;
   
   const toggleHistory = (field: string) => {
@@ -24,21 +27,24 @@ export default function ExtractionAnalysis() {
       date: "10/03/2023", dateStatus: "Confirmado", dateColor: "green",
       cnpj: "98.705.432/0001-10", cnpjStatus: "Confirmado", cnpjColor: "green",
       razao: "Empresa ABC S.A.", razaoStatus: "Confirmado", razaoColor: "green",
-      valor: "R$ 15.420,00", valorStatus: "Editado", valorColor: "orange"
+      valor: "R$ 15.420,00", valorStatus: "Editado", valorColor: "orange",
+      observacoes: "Referente aos serviços prestados conforme contrato de manutenção de equipamentos do período vigente de março de 2023. O pagamento deverá ser efetuado através de transferência bancária até o quinto dia útil subsequente à emissão desta nota. Valores sujeitos a juros e multa de 2% em caso de atraso na liquidação do título. Este documento comprova a entrega dos serviços e materiais utilizados nas devidas manutenções preventivas e corretivas."
     },
     "v2": {
       nf: "NF-2023-7840", nfStatus: "Versão v2", nfColor: "gray",
       date: "10/03/2023", dateStatus: "Confirmado", dateColor: "green",
       cnpj: "98.705.432/0001-10", cnpjStatus: "Atenção", cnpjColor: "red",
       razao: "Empresa ABC S.A.", razaoStatus: "Confirmado", razaoColor: "green",
-      valor: "R$ 15.420,00", valorStatus: "Confirmado", valorColor: "green"
+      valor: "R$ 15.420,00", valorStatus: "Confirmado", valorColor: "green",
+      observacoes: "Referente aos serviços prestados conforme contrato de manutenção de equipamentos do mês passado. O pagamento deverá ser efetuado através de transferência bancaria. Este documento comprova a entrega dos servicos."
     },
     "v1": {
       nf: "NF-2023-78", nfStatus: "Versão v1", nfColor: "gray",
       date: "01/03/2023", dateStatus: "IA Extraiu", dateColor: "gray",
       cnpj: "98.705.432/0001", cnpjStatus: "IA Extraiu", cnpjColor: "gray",
       razao: "Empresa ABC", razaoStatus: "IA Extraiu", razaoColor: "gray",
-      valor: "15.420,00", valorStatus: "IA Extraiu", valorColor: "gray"
+      valor: "15.420,00", valorStatus: "IA Extraiu", valorColor: "gray",
+      observacoes: "Serviços prestados conforme contrato de manutenção de equipamentos."
     }
   };
   
@@ -404,12 +410,21 @@ export default function ExtractionAnalysis() {
                   <History className="w-3.5 h-3.5 text-gray-500 absolute left-2.5 pointer-events-none" />
                   <select 
                     value={selectedVersion}
-                    onChange={(e) => setSelectedVersion(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value === "compare") {
+                        setShowCompareModal(true);
+                        setCompareVersion1(selectedVersion);
+                      } else {
+                        setSelectedVersion(e.target.value);
+                      }
+                    }}
                     className="appearance-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md pl-8 pr-8 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full"
                   >
                     <option value="v3">v3 (Atual)</option>
                     <option value="v2">v2 (Ontem, 14:30)</option>
                     <option value="v1">v1 (Segunda, 09:15)</option>
+                    <option disabled>──────────</option>
+                    <option value="compare">Comparar versões...</option>
                   </select>
                   <ChevronDown className="w-3.5 h-3.5 text-gray-500 absolute right-2.5 pointer-events-none" />
                 </div>
@@ -542,6 +557,128 @@ export default function ExtractionAnalysis() {
           </div>
         </div>
       </div>
+
+      {/* Compare Modal */}
+      {showCompareModal && (
+        <div className="fixed inset-0 z-50 flex flex-col p-4 bg-black/50 dark:bg-black/80 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-surface-dark w-full max-w-6xl mx-auto rounded-xl shadow-xl flex flex-col flex-1 overflow-hidden" style={{ maxHeight: '90vh' }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
+                  <ArrowRightLeft className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Comparar Versões</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Analise as diferenças entre as extrações realizadas</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowCompareModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+              <div className="grid grid-cols-2 divide-x divide-gray-200 dark:divide-gray-800 h-full">
+                {/* Left Side */}
+                <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900/20 overflow-hidden">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark shrink-0">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Versão 1</label>
+                    <select 
+                      value={compareVersion1}
+                      onChange={(e) => setCompareVersion1(e.target.value)}
+                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="v3">v3 (Atual)</option>
+                      <option value="v2">v2 (Ontem, 14:30)</option>
+                      <option value="v1">v1 (Segunda, 09:15)</option>
+                    </select>
+                  </div>
+                  <div className="p-6 overflow-y-auto space-y-6 flex-1 text-left">
+                    {["nf", "date", "cnpj", "razao", "valor", "observacoes"].map((fieldKey) => (
+                      <div key={fieldKey} className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {fieldKey === 'nf' ? 'Número da Nota Fiscal' : fieldKey === 'date' ? 'Data de Emissão' : fieldKey === 'cnpj' ? 'CNPJ Destinatário' : fieldKey === 'razao' ? 'Razão Social Destinatário' : fieldKey === 'valor' ? 'Valor Total' : 'Observações (Campo Longo)'}
+                        </label>
+                        {fieldKey === 'observacoes' ? (
+                          <details className="w-full border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 group overflow-hidden">
+                            <summary className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 font-medium cursor-pointer list-none flex items-center justify-between focus:outline-none hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                              <span>Ver texto completo</span>
+                              <ChevronDown className="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" />
+                            </summary>
+                            <div className="px-3 pb-3 text-sm text-gray-800 dark:text-gray-200 border-t border-gray-100 dark:border-gray-700 pt-2 break-words whitespace-pre-wrap leading-relaxed">
+                              {versionsData[compareVersion1][fieldKey]}
+                            </div>
+                          </details>
+                        ) : (
+                          <input type="text" readOnly value={versionsData[compareVersion1][fieldKey]} className="w-full border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right Side */}
+                <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900/20 overflow-hidden">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark shrink-0">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Versão 2</label>
+                    <select 
+                      value={compareVersion2}
+                      onChange={(e) => setCompareVersion2(e.target.value)}
+                      className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="v3">v3 (Atual)</option>
+                      <option value="v2">v2 (Ontem, 14:30)</option>
+                      <option value="v1">v1 (Segunda, 09:15)</option>
+                    </select>
+                  </div>
+                  <div className="p-6 overflow-y-auto space-y-6 flex-1 text-left">
+                    {["nf", "date", "cnpj", "razao", "valor", "observacoes"].map((fieldKey) => {
+                      const val1 = versionsData[compareVersion1][fieldKey];
+                      const val2 = versionsData[compareVersion2][fieldKey];
+                      const isDiff = val1 !== val2;
+                      return (
+                        <div key={fieldKey} className={`space-y-1.5 ${isDiff ? 'p-3 -mx-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg' : ''}`}>
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {fieldKey === 'nf' ? 'Número da Nota Fiscal' : fieldKey === 'date' ? 'Data de Emissão' : fieldKey === 'cnpj' ? 'CNPJ Destinatário' : fieldKey === 'razao' ? 'Razão Social Destinatário' : fieldKey === 'valor' ? 'Valor Total' : 'Observações (Campo Longo)'}
+                            </label>
+                            {isDiff && <span className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded uppercase">Diferença</span>}
+                          </div>
+                          {fieldKey === 'observacoes' ? (
+                            <details className={`w-full border rounded-md group overflow-hidden ${isDiff ? 'border-red-300 dark:border-red-800/50 bg-white dark:bg-gray-800' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'}`}>
+                              <summary className={`px-3 py-2 text-sm font-medium cursor-pointer list-none flex items-center justify-between focus:outline-none transition-colors ${isDiff ? 'text-red-600 dark:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-900/20' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                                <span>Ver texto completo</span>
+                                <ChevronDown className={`w-4 h-4 transition-transform group-open:rotate-180 ${isDiff ? 'text-red-400' : 'text-gray-400'}`} />
+                              </summary>
+                              <div className={`px-3 pb-3 text-sm border-t pt-2 break-words whitespace-pre-wrap leading-relaxed ${isDiff ? 'border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400' : 'border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200'}`}>
+                                {val2}
+                              </div>
+                            </details>
+                          ) : (
+                            <input type="text" readOnly value={val2} className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none ${isDiff ? 'border-red-300 dark:border-red-800/50 bg-white dark:bg-gray-800 text-red-700 dark:text-red-400' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200'}`} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex justify-end bg-white dark:bg-surface-dark shrink-0">
+               <button 
+                 onClick={() => setShowCompareModal(false)}
+                 className="px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600 rounded-lg transition-colors"
+               >
+                 Fechar Comparação
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
