@@ -82,17 +82,17 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 min-h-[calc(100vh-8rem)]">
-      {/* Internal Sidebar */}
-      <div className="w-full md:w-64 flex flex-col gap-1">
-        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Configurações</h2>
-        <nav className="flex flex-col gap-1">
+    <div className="flex flex-col gap-6 min-h-[calc(100vh-8rem)]">
+      {/* Top Tabs */}
+      <div className="w-full flex flex-col gap-2">
+        <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Configurações</h2>
+        <nav className="flex items-center gap-2 border-b border-gray-200 dark:border-border-dark overflow-x-auto">
           <button
             onClick={() => setActiveTab('geral')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'geral' 
-              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' 
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-active-dark'
+              ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
             }`}
           >
             <SettingsIcon className="w-4 h-4" />
@@ -100,10 +100,10 @@ export default function Settings() {
           </button>
           <button
             onClick={() => setActiveTab('modelos')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'modelos' 
-              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' 
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-active-dark'
+              ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
             }`}
           >
             <Cpu className="w-4 h-4" />
@@ -111,10 +111,10 @@ export default function Settings() {
           </button>
           <button
             onClick={() => setActiveTab('ocr')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'ocr' 
-              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' 
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-active-dark'
+              ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
             }`}
           >
             <Scan className="w-4 h-4" />
@@ -122,10 +122,10 @@ export default function Settings() {
           </button>
           <button
             onClick={() => setActiveTab('chaves')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'chaves' 
-              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' 
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-active-dark'
+              ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
             }`}
           >
             <Key className="w-4 h-4" />
