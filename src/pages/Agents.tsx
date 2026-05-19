@@ -350,9 +350,19 @@ export default function Agents() {
                     </div>
                     
                     <div className="flex-1 mb-4 relative z-0">
-                      <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed mb-2">
-                        {agent.description}
-                      </p>
+                      <div className="flex items-start justify-between gap-2 mb-2 group/desc">
+                        <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed line-clamp-2 flex-1">
+                          {agent.description}
+                        </p>
+                        <div className="relative flex items-center shrink-0">
+                          <Eye className="w-3.5 h-3.5 text-gray-400 hover:text-primary transition-colors cursor-help peer" />
+                          <div className="absolute bottom-full right-0 mb-2 w-max max-w-[250px] p-2 bg-gray-900 border border-gray-700 text-white text-xs rounded-lg shadow-xl invisible opacity-0 scale-95 transition-all md:delay-75 peer-hover:visible peer-hover:opacity-100 peer-hover:scale-100 z-[60] whitespace-normal break-words pointer-events-none">
+                            {agent.description}
+                            <div className="absolute top-full right-1 -mt-[1px] border-4 border-transparent border-t-gray-700"></div>
+                            <div className="absolute top-full right-1 -mt-[2px] border-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
+                      </div>
                       {agent.prompt && (
                         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-md p-3 border border-gray-100 dark:border-gray-700">
                           <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed line-clamp-2 italic mb-2">
@@ -430,7 +440,17 @@ export default function Agents() {
                            </div>
                         </td>
                         <td className="px-4 py-3 min-w-[200px] max-w-[300px]">
-                           <span className="line-clamp-1" title={agent.description}>{agent.description}</span>
+                           <div className="flex items-center group/desc-row">
+                             <span className="line-clamp-1 flex-1">{agent.description}</span>
+                             <div className="relative flex items-center shrink-0 ml-1">
+                               <Eye className="w-3.5 h-3.5 text-gray-400 hover:text-primary transition-colors cursor-help peer" />
+                               <div className="absolute bottom-full right-0 mb-2 w-max max-w-[250px] p-2 bg-gray-900 border border-gray-700 text-white text-xs rounded-lg shadow-xl invisible opacity-0 scale-95 transition-all md:delay-75 peer-hover:visible peer-hover:opacity-100 peer-hover:scale-100 z-[60] whitespace-normal break-words pointer-events-none">
+                                 {agent.description}
+                                 <div className="absolute top-full right-1 -mt-[1px] border-4 border-transparent border-t-gray-700"></div>
+                                 <div className="absolute top-full right-1 -mt-[2px] border-4 border-transparent border-t-gray-900"></div>
+                               </div>
+                             </div>
+                           </div>
                         </td>
                         <td className="px-4 py-3 min-w-[250px] max-w-[350px]">
                            <div className="flex items-center">
