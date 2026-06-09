@@ -230,6 +230,10 @@ function SearchableSelect({ options, selected, onChange }: { options: string[], 
 export default function Dashboard() {
   // Draft states (UI only)
   const [period, setPeriod] = useState('Este mês');
+  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  
   const [model, setModel] = useState('gpt-4o');
   const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>([]);
 
@@ -312,15 +316,44 @@ export default function Dashboard() {
       {/* Controls */}
       <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-4">
         <div className="flex flex-wrap items-center gap-3">
-          <select 
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option>Este mês</option>
-            <option>Mês passado</option>
-            <option>Últimos 30 dias</option>
-          </select>
+          <div className="relative">
+            <select 
+              value={period}
+              onChange={(e) => {
+                setPeriod(e.target.value);
+                if (e.target.value === 'Personalizado') {
+                  setIsCustomDateOpen(true);
+                } else {
+                  setIsCustomDateOpen(false);
+                }
+              }}
+              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option>Este mês</option>
+              <option>Mês passado</option>
+              <option>Últimos 30 dias</option>
+              <option>Personalizado</option>
+            </select>
+            
+            {isCustomDateOpen && (
+              <div className="absolute top-full left-0 mt-2 w-72 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Data de início</label>
+                    <input type="date" value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Data final</label>
+                    <input type="date" value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  </div>
+                  <div className="border-t border-gray-100 dark:border-gray-700 pt-4 flex justify-end gap-3 mt-2">
+                    <button onClick={() => { setIsCustomDateOpen(false); setPeriod('Este mês'); }} className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-md transition-colors">Cancelar</button>
+                    <button onClick={() => setIsCustomDateOpen(false)} className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">Aplicar</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           
           <MultiSelect 
             options={mockWorkflows} 
