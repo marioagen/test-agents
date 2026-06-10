@@ -297,85 +297,92 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Dashboard de Consumo e Bilhetagem
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Woopi AI</p>
-        </div>
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-3 text-right">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Plano Atual</div>
-          <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">QA-SUBSCRIPTION</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">WTCs:0</div>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <select 
-              value={period}
-              onChange={(e) => {
-                setPeriod(e.target.value);
-                if (e.target.value === 'Personalizado') {
-                  setIsCustomDateOpen(true);
-                } else {
-                  setIsCustomDateOpen(false);
-                }
-              }}
-              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option>Este mês</option>
-              <option>Mês passado</option>
-              <option>Últimos 30 dias</option>
-              <option>Personalizado</option>
-            </select>
-            
-            {isCustomDateOpen && (
-              <div className="absolute top-full left-0 mt-2 w-72 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Data de início</label>
-                    <input type="date" value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Data final</label>
-                    <input type="date" value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  </div>
-                  <div className="border-t border-gray-100 dark:border-gray-700 pt-4 flex justify-end gap-3 mt-2">
-                    <button onClick={() => { setIsCustomDateOpen(false); setPeriod('Este mês'); }} className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-md transition-colors">Cancelar</button>
-                    <button onClick={() => setIsCustomDateOpen(false)} className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">Aplicar</button>
-                  </div>
-                </div>
-              </div>
-            )}
+    <div className="flex flex-col h-full">
+      {/* Sticky Top Area */}
+      <div className="sticky top-16 z-30 bg-gray-50 dark:bg-background-dark pt-8 pb-4 -mt-8 mx-[-2rem] px-[2rem] border-b border-gray-200 dark:border-gray-700 mb-6">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Dashboard de Consumo e Bilhetagem
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Woopi AI</p>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-3 text-right">
+              <div className="text-xs text-gray-500 dark:text-gray-400">Plano Atual</div>
+              <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">QA-SUBSCRIPTION</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">WTCs:0</div>
+            </div>
           </div>
-          
-          <MultiSelect 
-            options={mockWorkflows} 
-            selected={selectedWorkflows} 
-            onChange={setSelectedWorkflows} 
-          />
 
-          <button 
-            onClick={handleUpdate}
-            disabled={isUpdating}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} />
-            Atualizar
-          </button>
-        </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
-          Atualização automática a cada 5 minutos
+          {/* Controls */}
+          <div className="flex justify-between items-center">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative">
+                <select 
+                  value={period}
+                  onChange={(e) => {
+                    setPeriod(e.target.value);
+                    if (e.target.value === 'Personalizado') {
+                      setIsCustomDateOpen(true);
+                    } else {
+                      setIsCustomDateOpen(false);
+                    }
+                  }}
+                  className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option>Este mês</option>
+                  <option>Mês passado</option>
+                  <option>Últimos 30 dias</option>
+                  <option>Personalizado</option>
+                </select>
+                
+                {isCustomDateOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-72 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Data de início</label>
+                        <input type="date" value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Data final</label>
+                        <input type="date" value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      </div>
+                      <div className="border-t border-gray-100 dark:border-gray-700 pt-4 flex justify-end gap-3 mt-2">
+                        <button onClick={() => { setIsCustomDateOpen(false); setPeriod('Este mês'); }} className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-md transition-colors">Cancelar</button>
+                        <button onClick={() => setIsCustomDateOpen(false)} className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">Aplicar</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <MultiSelect 
+                options={mockWorkflows} 
+                selected={selectedWorkflows} 
+                onChange={setSelectedWorkflows} 
+              />
+
+              <button 
+                onClick={handleUpdate}
+                disabled={isUpdating}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} />
+                Atualizar
+              </button>
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+              Atualização automática a cada 5 minutos
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Total WTC */}
+      {/* Content Area */}
+      <div className="space-y-6">
+        {/* Total WTC */}
       <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center shadow-sm">
         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mb-2">
           Total WTC <Info className="w-4 h-4" />
@@ -526,6 +533,7 @@ export default function Dashboard() {
         </div>
 
       </div>
+    </div>
     </div>
   );
 }
