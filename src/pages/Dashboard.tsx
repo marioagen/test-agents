@@ -384,8 +384,12 @@ export default function Dashboard() {
       <div className="space-y-6">
         {/* Total WTC */}
       <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center shadow-sm">
-        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mb-2">
-          Total WTC <Info className="w-4 h-4" />
+        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mb-2 relative group">
+          Total WTC <Info className="w-4 h-4 cursor-help" />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 text-center pointer-events-none">
+            WTC (Woopi Total Coins) é a unidade de medida do consumo no período selecionado, seu cálculo é baseado nos multiplicadores do seu plano. Mais informações em nosso site woopi.ai.
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+          </div>
         </div>
         <div className="text-4xl font-bold text-blue-600">{displayWTC}</div>
       </div>
