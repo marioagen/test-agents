@@ -227,6 +227,44 @@ function SearchableSelect({ options, selected, onChange }: { options: string[], 
   );
 }
 
+function getDateRangeString(period: string, startDate: string, endDate: string) {
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+  
+  if (period === 'Personalizado') {
+    if (!startDate && !endDate) return 'Selecione as datas';
+    const formatStrDate = (str: string) => {
+      if (!str) return '...';
+      const [y, m, d] = str.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    return `${formatStrDate(startDate)} a ${formatStrDate(endDate)}`;
+  }
+  
+  const today = new Date();
+  
+  if (period === 'Este mês') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return `${formatDate(firstDay)} a ${formatDate(lastDay)}`;
+  }
+  
+  if (period === 'Mês passado') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+    return `${formatDate(firstDay)} a ${formatDate(lastDay)}`;
+  }
+  
+  if (period === 'Últimos 30 dias') {
+    const firstDay = new Date(today);
+    firstDay.setDate(firstDay.getDate() - 30);
+    return `${formatDate(firstDay)} a ${formatDate(today)}`;
+  }
+  
+  return '';
+}
+
 export default function Dashboard() {
   // Draft states (UI only)
   const [period, setPeriod] = useState('Este mês');
@@ -318,8 +356,11 @@ export default function Dashboard() {
 
           {/* Controls */}
           <div className="flex justify-between items-center">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="relative flex flex-col items-start gap-1">
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 font-medium px-1">
+                  {getDateRangeString(period, customStartDate, customEndDate)}
+                </div>
                 <select 
                   value={period}
                   onChange={(e) => {
@@ -330,7 +371,7 @@ export default function Dashboard() {
                       setIsCustomDateOpen(false);
                     }
                   }}
-                  className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
                 >
                   <option>Este mês</option>
                   <option>Mês passado</option>
