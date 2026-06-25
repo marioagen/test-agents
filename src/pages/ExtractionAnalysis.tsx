@@ -5,13 +5,18 @@ import {
   FileText, PenLine, ChevronDown, SplitSquareHorizontal, CheckCircle, HelpCircle, Columns, Sidebar, Square, PanelRight, Link, X,
   Share2, Menu, Maximize2, MoreVertical, AlignRight, Download, Printer, RotateCw, Type, Focus, ZoomIn, ZoomOut, RotateCcw, Pencil, Search, CornerUpLeft, CornerUpRight, ArrowRightLeft
 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 export default function ExtractionAnalysis() {
+  const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(1);
   const [showFieldHistory, setShowFieldHistory] = useState<Record<string, boolean>>({});
   const [selectedVersion, setSelectedVersion] = useState("v3");
   const [showReprocessModal, setShowReprocessModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectAssignee, setRejectAssignee] = useState("");
+  const [rejectStage, setRejectStage] = useState("");
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareVersion1, setCompareVersion1] = useState("v3");
   const [compareVersion2, setCompareVersion2] = useState("v2");
@@ -49,6 +54,20 @@ export default function ExtractionAnalysis() {
   };
   
   const currentData = versionsData[selectedVersion];
+
+  const mockUsers = [
+    { id: '1', name: 'Ana Silva', role: 'Analista', initials: 'AS' },
+    { id: '2', name: 'Carlos Mendes', role: 'Supervisor', initials: 'CM' },
+    { id: '3', name: 'Juliana Costa', role: 'Revisora', initials: 'JC' },
+    { id: '4', name: 'Roberto Alves', role: 'Gerente', initials: 'RA' },
+    { id: '5', name: 'Fernanda Lima', role: 'Analista', initials: 'FL' }
+  ];
+
+  const mockStages = [
+    { id: 'classificacao', name: 'Classificação' },
+    { id: 'extracao', name: 'Extração' },
+    { id: 'revisao', name: 'Revisão Manual' }
+  ];
 
   const getBadgeColor = (color: string) => {
     switch(color) {
@@ -96,7 +115,10 @@ export default function ExtractionAnalysis() {
              </button>
            </div>
            
-           <button className="flex items-center gap-2 text-[#EA001B] border border-red-200 dark:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors">
+           <button 
+             onClick={() => setShowRejectModal(true)}
+             className="flex items-center gap-2 text-[#EA001B] border border-red-200 dark:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+           >
              <XCircle className="w-4 h-4" />
              Reprovar
            </button>
@@ -170,7 +192,117 @@ export default function ExtractionAnalysis() {
              </div>
            )}
            
-           {/* PDF Viewer Header */}
+           {/* Reject Modal */}
+            {showRejectModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 animate-in fade-in duration-200">
+                <div className="bg-white dark:bg-surface-dark w-full max-w-[480px] rounded-xl shadow-xl flex flex-col overflow-hidden">
+                  <div className="p-6 relative">
+                    <button 
+                      onClick={() => setShowRejectModal(false)}
+                      className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    
+                    <div className="flex items-start gap-4 mb-6">
+                      <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 flex items-center justify-center shrink-0">
+                        <XCircle className="w-5 h-5 text-red-500" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Reprovar Documento</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Forneça uma justificativa e selecione para qual etapa o documento deve retornar.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-5">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5">
+                          Justificativa <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value)}
+                          placeholder="Descreva o motivo da reprovação..."
+                          className="w-full h-24 p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5 flex items-center gap-2">
+                          Atribuir a <span className="text-gray-400 font-normal text-xs">opcional</span>
+                        </label>
+                        <div className="relative border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+                          <div className="flex items-center px-3 py-2 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+                            <Search className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+                            <input 
+                              type="text" 
+                              placeholder="Buscar usuário..." 
+                              className="w-full text-sm bg-transparent outline-none text-gray-900 dark:text-white"
+                            />
+                          </div>
+                          <div className="max-h-48 overflow-y-auto bg-white dark:bg-gray-800 py-1">
+                            {mockUsers.map(user => (
+                              <div 
+                                key={user.id}
+                                onClick={() => setRejectAssignee(user.id)}
+                                className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 ${rejectAssignee === user.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                              >
+                                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-medium shrink-0">
+                                  {user.initials}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white leading-tight">{user.name}</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">{user.role}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5">
+                          Retornar para a etapa <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={rejectStage}
+                          onChange={(e) => setRejectStage(e.target.value)}
+                          className="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="" disabled>Selecione a etapa...</option>
+                          {mockStages.map(stage => (
+                            <option key={stage.id} value={stage.id}>{stage.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-800">
+                    <button 
+                      onClick={() => setShowRejectModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setShowRejectModal(false);
+                        navigate('/esteiras');
+                      }}
+                      disabled={!rejectReason.trim() || !rejectStage}
+                      className="px-4 py-2 text-sm font-medium text-white bg-[#EA001B] hover:bg-red-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Confirmar Reprovação
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* PDF Viewer Header */}
            <div className="px-6 pb-2 pt-2 flex items-center justify-between shrink-0">
              <div className="flex items-center gap-2">
                <h3 className="font-bold text-gray-900 dark:text-white text-[15px] tracking-tight">PDF ORIGINAL</h3>
