@@ -236,7 +236,6 @@ export default function Agents() {
              >
                <option value="">Sem agrupamento</option>
                <option value="owner">Proprietário</option>
-               <option value="type">Tags</option>
              </select>
           </div>
           
@@ -410,9 +409,6 @@ export default function Agents() {
                       <th className="px-4 py-3 font-medium cursor-pointer group" onClick={() => handleSort('prompt')}>
                         <div className="flex items-center gap-1">Prompt {renderSortIcon('prompt')}</div>
                       </th>
-                      <th className="px-4 py-3 font-medium cursor-pointer group whitespace-nowrap" onClick={() => handleSort('type')}>
-                        <div className="flex items-center gap-1">Tags {renderSortIcon('type')}</div>
-                      </th>
                       <th className="px-4 py-3 font-medium cursor-pointer group whitespace-nowrap" onClick={() => handleSort('date')}>
                         <div className="flex items-center gap-1">Criação {renderSortIcon('date')}</div>
                       </th>
@@ -465,11 +461,6 @@ export default function Agents() {
                                 </button>
                              )}
                            </div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium">
-                            {agent.type === 'orange' ? 'Laranja' : 'Azul'}
-                          </span>
                         </td>
                         <td className="px-4 py-3 text-blue-500 whitespace-nowrap text-xs">{agent.date}</td>
                         <td className="px-4 py-3">
