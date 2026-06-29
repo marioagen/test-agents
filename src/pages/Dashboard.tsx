@@ -266,6 +266,14 @@ function getDateRangeString(period: string, startDate: string, endDate: string) 
 }
 
 export default function Dashboard() {
+  // Computed dates for min/max on custom datepicker
+  const maxDateStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const minDateStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 90);
+    return d.toISOString().split('T')[0];
+  }, []);
+
   // Draft states (UI only)
   const [period, setPeriod] = useState('Este mês');
   const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
@@ -382,13 +390,18 @@ export default function Dashboard() {
                 {isCustomDateOpen && (
                   <div className="absolute top-full left-0 mt-2 w-72 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
                     <div className="space-y-4">
+                      <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/50 rounded-md p-2.5">
+                        <p className="text-xs text-orange-700 dark:text-orange-400 font-medium">
+                          Período limitado somente aos últimos 90 dias
+                        </p>
+                      </div>
                       <div>
                         <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Data de início</label>
-                        <input type="date" value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                        <input type="date" min={minDateStr} max={maxDateStr} value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                       </div>
                       <div>
                         <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Data final</label>
-                        <input type="date" value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                        <input type="date" min={minDateStr} max={maxDateStr} value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                       </div>
                       <div className="border-t border-gray-100 dark:border-gray-700 pt-4 flex justify-end gap-3 mt-2">
                         <button onClick={() => { setIsCustomDateOpen(false); setPeriod('Este mês'); }} className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-md transition-colors">Cancelar</button>
@@ -459,7 +472,7 @@ export default function Dashboard() {
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{totals.tokens}</div>
               <div className="text-xs text-gray-500 mt-1">Valor no plano: {UNIT_COSTS.tokens}</div>
             </div>
-            <div className="border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col justify-center">
+            <div className="border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col justify-start">
               <div className="text-sm text-gray-600 dark:text-gray-400">Totalizador no Período</div>
               <div className="text-xl font-bold text-blue-600 mt-1">{totalizers.tokens.toFixed(7)}</div>
             </div>
@@ -492,7 +505,7 @@ export default function Dashboard() {
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{totals.pages}</div>
               <div className="text-xs text-gray-500 mt-1">Valor no plano: {UNIT_COSTS.pages}</div>
             </div>
-            <div className="border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col justify-center">
+            <div className="border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col justify-start">
               <div className="text-sm text-gray-600 dark:text-gray-400">Totalizador no Período</div>
               <div className="text-xl font-bold text-blue-600 mt-1">{totalizers.pages.toFixed(7)}</div>
             </div>
@@ -525,7 +538,7 @@ export default function Dashboard() {
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{totals.automation}</div>
               <div className="text-xs text-gray-500 mt-1">Valor no plano: {UNIT_COSTS.automation}</div>
             </div>
-            <div className="border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col justify-center">
+            <div className="border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col justify-start">
               <div className="text-sm text-gray-600 dark:text-gray-400">Totalizador no Período</div>
               <div className="text-xl font-bold text-blue-600 mt-1">{totalizers.automation.toFixed(7)}</div>
             </div>
@@ -557,7 +570,7 @@ export default function Dashboard() {
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{totals.processing}</div>
               <div className="text-xs text-gray-500 mt-1">Valor no plano: {UNIT_COSTS.processing}</div>
             </div>
-            <div className="border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col justify-center">
+            <div className="border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col justify-start">
               <div className="text-sm text-gray-600 dark:text-gray-400">Totalizador no Período</div>
               <div className="text-xl font-bold text-blue-600 mt-1">{totalizers.processing.toFixed(7)}</div>
             </div>
