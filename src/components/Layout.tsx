@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Moon, Sun, Home, Layers, Users, FileText, AlertTriangle, LayoutDashboard, Key, Wrench, ChevronDown, ChevronRight, ClipboardList, ChevronLeft, Globe, Bell, User, LogOut, Settings, GitBranch } from 'lucide-react';
+import { Moon, Sun, Home, Layers, Users, FileText, AlertTriangle, LayoutDashboard, Key, Wrench, ChevronDown, ChevronRight, ClipboardList, ChevronLeft, Globe, Bell, User, LogOut, Settings, GitBranch, Sliders, Workflow, PenTool, Bot, Plug, Zap, BarChart2, ShieldCheck } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -98,18 +98,31 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         <nav className="p-3 space-y-2 overflow-y-auto flex-1">
-          <SidebarItem icon={<LayoutDashboard className="w-5 h-5" />} label="Painel de Consumo" to="/dashboard" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Home className="w-5 h-5" />} label="Style Guide" to="/" isCollapsed={isCollapsed} />
+          <SidebarItem icon={<Home className="w-5 h-5" />} label="Home" to="/" isCollapsed={isCollapsed} />
           
-          <SidebarGroup icon={<Wrench className="w-5 h-5" />} label="Ferramentas" activePathPrefix="/agentes" isCollapsed={isCollapsed}>
-            <SidebarItem icon={<Users className="w-5 h-5" />} label="Agentes" to="/agentes" isSubItem isCollapsed={isCollapsed} />
+          <SidebarItem icon={<Users className="w-5 h-5" />} label="Gestão de Usuários" to="/gestao-usuarios" isCollapsed={isCollapsed} />
+          
+          <SidebarItem icon={<Sliders className="w-5 h-5" />} label="Esteiras de Processamento" to="/esteiras" isCollapsed={isCollapsed} />
+          
+          <SidebarItem icon={<Workflow className="w-5 h-5" />} label="Gestão de Esteiras" to="/gestao-esteiras" isCollapsed={isCollapsed} />
+          
+          <SidebarGroup icon={<PenTool className="w-5 h-5" />} label="Ferramentas" activePaths={['/agentes', '/conectores', '/templates-api', '/questionarios']} isCollapsed={isCollapsed}>
+            <SidebarItem icon={<Bot className="w-5 h-5" />} label="Agentes" to="/agentes" isSubItem isCollapsed={isCollapsed} />
+            <SidebarItem icon={<Plug className="w-5 h-5" />} label="Conectores" to="/conectores" isSubItem isCollapsed={isCollapsed} />
+            <SidebarItem icon={<Zap className="w-5 h-5" />} label="Templates de API" to="/templates-api" isSubItem isCollapsed={isCollapsed} />
+            <SidebarItem icon={<ClipboardList className="w-5 h-5" />} label="Questionários" to="/questionarios" isSubItem isCollapsed={isCollapsed} />
           </SidebarGroup>
           
-          <SidebarItem icon={<AlertTriangle className="w-5 h-5" />} label="Falhas" to="/falhas" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<GitBranch className="w-5 h-5" />} label="Esteiras de processamento" to="/esteiras" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<FileText className="w-5 h-5" />} label="Análise de extração" to="/analise-extracao" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Layers className="w-5 h-5" />} label="Documents" to="/documents" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<ClipboardList className="w-5 h-5" />} label="Auditoria" to="/auditoria" isCollapsed={isCollapsed} />
+          <SidebarItem icon={<BarChart2 className="w-5 h-5" />} label="Painel de Consumo" to="/dashboard" isCollapsed={isCollapsed} />
+          
+          <SidebarItem icon={<ShieldCheck className="w-5 h-5" />} label="Auditoria" to="/auditoria" isCollapsed={isCollapsed} />
+
+          {/* Outros itens ocultos ou em outra seção se necessário (mantendo para não quebrar navegação) */}
+          <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+            <SidebarItem icon={<AlertTriangle className="w-5 h-5" />} label="Falhas" to="/falhas" isCollapsed={isCollapsed} />
+            <SidebarItem icon={<FileText className="w-5 h-5" />} label="Análise de extração" to="/analise-extracao" isCollapsed={isCollapsed} />
+            <SidebarItem icon={<Layers className="w-5 h-5" />} label="Documents" to="/documents" isCollapsed={isCollapsed} />
+          </div>
         </nav>
       </aside>
 
@@ -123,9 +136,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SidebarGroup({ icon, label, children, activePathPrefix, isCollapsed }: { icon: React.ReactNode, label: string, children: React.ReactNode, activePathPrefix: string, isCollapsed: boolean }) {
+function SidebarGroup({ icon, label, children, activePaths = [], isCollapsed }: { icon: React.ReactNode, label: string, children: React.ReactNode, activePaths?: string[], isCollapsed: boolean }) {
   const location = useLocation();
-  const isActive = location.pathname.startsWith(activePathPrefix);
+  const isActive = activePaths.some(path => location.pathname.startsWith(path));
   const [isOpen, setIsOpen] = useState(isActive);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  ArrowLeft, History, LayoutPanelLeft, LayoutPanelRight, CheckCircle2, 
+  ArrowLeft, History, LayoutPanelLeft, CheckCircle2, 
   XOctagon, XCircle, Filter, ShieldCheck, MessageCircle, ChevronLeft, ChevronRight, 
   FileText, PenLine, ChevronDown, SplitSquareHorizontal, CheckCircle, HelpCircle, Columns, Sidebar, Square, PanelRight, Link, X,
   Share2, Menu, Maximize2, MoreVertical, AlignRight, Download, Printer, RotateCw, Type, Focus, ZoomIn, ZoomOut, RotateCcw, Pencil, Search, CornerUpLeft, CornerUpRight, ArrowRightLeft
