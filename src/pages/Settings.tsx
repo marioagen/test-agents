@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, Cpu, Scan, Key, Save, Copy, Plus, X, Trash2, Package, Upload, Download, Edit2, AlertCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Cpu, Scan, Key, Save, Copy, Plus, X, Trash2, Package, Upload, Download, Edit2, AlertCircle, RotateCcw } from 'lucide-react';
 
 interface KeyToken {
   id: string;
@@ -13,6 +13,7 @@ interface MetadataPackage {
   slug: string;
   version: string;
   lastUpdated: string;
+  backup?: MetadataPackage;
 }
 
 const initialPackages: MetadataPackage[] = [
@@ -48,6 +49,8 @@ export default function Settings() {
   const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
   const [isPackageDeleteModalOpen, setIsPackageDeleteModalOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<MetadataPackage | null>(null);
+  const [isRollbackModalOpen, setIsRollbackModalOpen] = useState(false);
+  const [packageToRollback, setPackageToRollback] = useState<MetadataPackage | null>(null);
   const [packageToImport, setPackageToImport] = useState<MetadataPackage | null>(null);
   const [importConflict, setImportConflict] = useState<'none' | 'overwrite' | 'collision'>('none');
 
@@ -121,8 +124,16 @@ export default function Settings() {
   const confirmImport = () => {
     if (packageToImport) {
       if (importConflict === 'overwrite') {
-        // Find existing and update
-        setPackages(packages.map(p => p.id === packageToImport.id ? packageToImport : p));
+        // Find existing and update, storing the old one as backup
+        setPackages(packages.map(p => {
+          if (p.id === packageToImport.id) {
+            return {
+              ...packageToImport,
+              backup: { ...p } // Store current as backup
+            };
+          }
+          return p;
+        }));
       } else {
         // Just add
         setPackages([...packages, packageToImport]);
@@ -131,6 +142,14 @@ export default function Settings() {
     setIsImportModalOpen(false);
     setPackageToImport(null);
     setImportConflict('none');
+  };
+
+  const handleRollback = () => {
+    if (packageToRollback && packageToRollback.backup) {
+      setPackages(packages.map(p => p.id === packageToRollback.id ? packageToRollback.backup! : p));
+      setIsRollbackModalOpen(false);
+      setPackageToRollback(null);
+    }
   };
 
   const handleDeletePackage = () => {
@@ -463,6 +482,15 @@ export default function Settings() {
                       {pkg.lastUpdated}
                     </div>
                     <div className="w-1/6 flex justify-end gap-2">
+                      {pkg.backup && (
+                        <button 
+                          onClick={() => { setPackageToRollback(pkg); setIsRollbackModalOpen(true); }}
+                          className="text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 p-1.5 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors" 
+                          title={`Restaurar versão anterior (v${pkg.backup.version})`}
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </button>
+                      )}
                       <button className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Exportar pacote (Manifest.json)">
                         <Download className="w-4 h-4" />
                       </button>
@@ -601,6 +629,48 @@ export default function Settings() {
                 className="py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium text-sm transition-colors"
               >
                 Remover
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Package Rollback Confirmation Modal */}
+      {isRollbackModalOpen && packageToRollback && packageToRollback.backup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-md p-6 flex flex-col">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0 text-orange-600 dark:text-orange-400 mt-1">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">
+                  Restaurar Versão Anterior?
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Você está prestes a substituir a versão atual (<strong>v{packageToRollback.version}</strong>) do pacote "{packageToRollback.name}" 
+                  pela sua versão anterior de backup (<strong>v{packageToRollback.backup.version}</strong>).
+                </p>
+                <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/50 rounded-md p-3 mt-4">
+                  <p className="text-xs text-orange-700 dark:text-orange-400">
+                    Os ativos modificados pela versão atual serão revertidos ao estado em que se encontravam no backup.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 w-full mt-2">
+              <button
+                onClick={() => { setIsRollbackModalOpen(false); setPackageToRollback(null); }}
+                className="py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md font-medium text-sm transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRollback}
+                className="py-2 px-4 bg-orange-600 hover:bg-orange-700 text-white rounded-md font-medium text-sm transition-colors"
+              >
+                Restaurar Versão
               </button>
             </div>
           </div>
