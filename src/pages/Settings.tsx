@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, Cpu, Scan, Key, Save, Copy, Plus, X, Trash2, Package, Upload, Download, Edit2, AlertCircle, RotateCcw } from 'lucide-react';
+import { Settings as SettingsIcon, Cpu, Scan, Key, Save, Copy, Plus, X, Trash2, Package, Upload, Download, Edit2, AlertCircle, RotateCcw, Users, GitMerge, Wrench, CheckCircle2 } from 'lucide-react';
 
 interface KeyToken {
   id: string;
@@ -703,44 +703,58 @@ export default function Settings() {
               </div>
 
               <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Composição de Ativos</h4>
+                <div className="flex items-center gap-2 mb-4">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Conteúdo do Pacote</h4>
+                  <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs px-2 py-0.5 rounded-full font-medium border border-blue-200 dark:border-blue-800/50">
+                    Exportação Completa
+                  </span>
+                </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Selecione os recursos que deseja incluir neste pacote. Eles serão exportados mantendo os vínculos.
+                  Todos os recursos e configurações atuais serão empacotados. Abaixo o resumo dos itens que serão exportados mantendo todos os seus vínculos estruturais.
                 </p>
                 
-                <div className="space-y-4">
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-800/30">
-                    <label className="flex items-center gap-2 font-medium text-gray-700 dark:text-gray-300 text-sm mb-3">
-                      <input type="checkbox" className="rounded border-gray-300" /> Acessos (Usuários e Times)
-                    </label>
-                    <div className="ml-6 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Usuários (6)</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Times (3)</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Perfis e Permissões (3)</label>
+                <div className="space-y-3">
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
+                    <div className="mt-0.5 p-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Acessos</h5>
+                      <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 6 Usuários</span>
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 3 Times</span>
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 3 Perfis e Permissões</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-800/30">
-                    <label className="flex items-center gap-2 font-medium text-gray-700 dark:text-gray-300 text-sm mb-3">
-                      <input type="checkbox" className="rounded border-gray-300" /> Esteiras de Processamento (Workflows)
-                    </label>
-                    <div className="ml-6 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Workflow Aprovação de Notas</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Extração de Dados Cadastrais</label>
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
+                    <div className="mt-0.5 p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md">
+                      <GitMerge className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Esteiras de Processamento (Workflows)</h5>
+                      <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Workflow Aprovação de Notas</span>
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Extração de Dados Cadastrais</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-800/30">
-                    <label className="flex items-center gap-2 font-medium text-gray-700 dark:text-gray-300 text-sm mb-3">
-                      <input type="checkbox" className="rounded border-gray-300" /> Ferramentas (Agentes, Conectores, API, Questionários)
-                    </label>
-                    <div className="ml-6 grid grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Agente Analista Fiscal</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Agente Resumo Contábil</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Conector ERP Sankhya</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Conector Salesforce</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Template API - Busca CEP</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="rounded border-gray-300" /> Questionário - Onboarding</label>
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
+                    <div className="mt-0.5 p-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-md">
+                      <Wrench className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Ferramentas</h5>
+                      <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 text-xs text-gray-600 dark:text-gray-400 mt-1.5">
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Agente Analista Fiscal</span>
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Agente Resumo Contábil</span>
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Conector ERP Sankhya</span>
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Conector Salesforce</span>
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Template API - Busca CEP</span>
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Questionário - Onboarding</span>
+                      </div>
                     </div>
                   </div>
                 </div>
