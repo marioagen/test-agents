@@ -67,6 +67,10 @@ export default function App() {
           <Route path="/gestao-usuarios" element={<UserManagement />} />
           <Route path="/auditoria" element={<Audit />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/pacotes" element={<Settings initialTab="pacotes" initialView="list" />} />
+          <Route path="/pacotes" element={<Settings initialTab="pacotes" initialView="list" />} />
+          <Route path="/pacotes/novo" element={<Settings initialTab="pacotes" initialView="create" />} />
+          <Route path="/pacotes/importar" element={<Settings initialTab="pacotes" initialView="list" />} />
           <Route path="/documents" element={<div className="p-8"><h1 className="text-2xl font-bold dark:text-white">Documents</h1><p className="text-gray-500 dark:text-gray-400 mt-2">Página em construção</p></div>} />
         </Routes>
       </Layout>

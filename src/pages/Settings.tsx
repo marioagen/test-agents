@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, Cpu, Scan, Key, Save, Copy, Plus, X, Trash2, Package, Upload, Download, Edit2, AlertCircle, RotateCcw, Users, GitMerge, Wrench, CheckCircle2 } from 'lucide-react';
+import { 
+  Settings as SettingsIcon, Cpu, Scan, Key, Save, Copy, Plus, X, 
+  Trash2, Package, Upload, Download, AlertCircle, RotateCcw, 
+  Users, GitMerge, Wrench, CheckCircle2, ArrowLeft 
+} from 'lucide-react';
 
 interface KeyToken {
   id: string;
@@ -32,8 +36,14 @@ const initialKeys: KeyToken[] = [
   { id: '7', name: 'keyname g', value: 'wuggjl371xsFfqRBhdNEqrCCKv2tbBUv5s1SAikGIfjBk=zy' },
 ];
 
-export default function Settings() {
-  const [activeTab, setActiveTab] = useState('geral');
+interface SettingsProps {
+  initialTab?: string;
+  initialView?: 'list' | 'create';
+}
+
+export default function Settings({ initialTab = 'geral', initialView = 'list' }: SettingsProps) {
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [packageView, setPackageView] = useState<'list' | 'create'>(initialView);
   
   // Keys State
   const [keys, setKeys] = useState<KeyToken[]>(initialKeys);
@@ -44,9 +54,11 @@ export default function Settings() {
 
   // Packages State
   const [packages, setPackages] = useState<MetadataPackage[]>(initialPackages);
+  const [newPackageName, setNewPackageName] = useState('');
+  const [newPackageVersion, setNewPackageVersion] = useState('1.0.0');
+
+  // Package Modals / States for actions
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
   const [isPackageDeleteModalOpen, setIsPackageDeleteModalOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<MetadataPackage | null>(null);
   const [isRollbackModalOpen, setIsRollbackModalOpen] = useState(false);
@@ -109,7 +121,7 @@ export default function Settings() {
   };
 
   const handleSimulateImport = () => {
-    // Simulate detecting a conflict
+    // Open import modal for alert validation
     setPackageToImport({
       id: 'uuid-pkg-1', // Same UUID as an existing one to simulate overwrite
       name: 'Pacote Financeiro Core',
@@ -144,6 +156,53 @@ export default function Settings() {
     setImportConflict('none');
   };
 
+  const handleCreatePackage = () => {
+    const pkgName = newPackageName.trim() || 'Novo Pacote de Metadados';
+    const pkgSlug = 'pkg-' + pkgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const newPkg: MetadataPackage = {
+      id: `uuid-pkg-${Date.now().toString(36)}`,
+      name: pkgName,
+      slug: pkgSlug,
+      version: newPackageVersion.trim() || '1.0.0',
+      lastUpdated: new Date().toLocaleDateString('pt-BR')
+    };
+
+    setPackages([...packages, newPkg]);
+    setNewPackageName('');
+    setNewPackageVersion('1.0.0');
+    setPackageView('list');
+  };
+
+  const handleExportPackage = (pkg: MetadataPackage) => {
+    const manifest = {
+      id: pkg.id,
+      name: pkg.name,
+      slug: pkg.slug,
+      version: pkg.version,
+      lastUpdated: pkg.lastUpdated,
+      exportMode: 'full_bundle',
+      assets: {
+        access: ['6 Usuários', '3 Times', '3 Perfis e Permissões'],
+        workflows: ['Workflow Aprovação de Notas', 'Extração de Dados Cadastrais'],
+        tools: [
+          'Agente Analista Fiscal',
+          'Agente Resumo Contábil',
+          'Conector ERP Sankhya',
+          'Conector Salesforce',
+          'Template API - Busca CEP',
+          'Questionário - Onboarding'
+        ]
+      }
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifest, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `${pkg.slug}-v${pkg.version}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   const handleRollback = () => {
     if (packageToRollback && packageToRollback.backup) {
       setPackages(packages.map(p => p.id === packageToRollback.id ? packageToRollback.backup! : p));
@@ -160,6 +219,155 @@ export default function Settings() {
     }
   };
 
+  // FULL SCREEN: CRIAR PACOTE DE METADADOS (com opção de voltar padrão com a seta)
+  if (activeTab === 'pacotes' && packageView === 'create') {
+    return (
+      <div className="flex flex-col gap-6 min-h-[calc(100vh-8rem)]">
+        {/* Full Screen Top Navigation Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setPackageView('list')}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+              title="Voltar para Pacotes"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Voltar</span>
+            </button>
+            <div className="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Criar Pacote de Metadados</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Configure as informações do pacote e gere a exportação completa</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPackageView('list')}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleCreatePackage}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
+            >
+              Criar Pacote
+            </button>
+          </div>
+        </div>
+
+        {/* Full Screen Form Body - Maintaining exact elements from the previous screen */}
+        <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Nome do Pacote
+              </label>
+              <input 
+                type="text" 
+                value={newPackageName}
+                onChange={(e) => setNewPackageName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-background-dark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                placeholder="Ex: Pacote Financeiro Core" 
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Versão Semântica
+              </label>
+              <input 
+                type="text" 
+                value={newPackageVersion}
+                onChange={(e) => setNewPackageVersion(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-background-dark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                placeholder="Ex: 1.0.0" 
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Conteúdo do Pacote</h4>
+              <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs px-2 py-0.5 rounded-full font-medium border border-blue-200 dark:border-blue-800/50">
+                Exportação Completa
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Todos os recursos e configurações atuais serão empacotados. Abaixo o resumo dos itens que serão exportados mantendo todos os seus vínculos estruturais.
+            </p>
+            
+            <div className="space-y-3">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
+                <div className="mt-0.5 p-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Acessos</h5>
+                  <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 6 Usuários</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 3 Times</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 3 Perfis e Permissões</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
+                <div className="mt-0.5 p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md">
+                  <GitMerge className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Esteiras de Processamento (Workflows)</h5>
+                  <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Workflow Aprovação de Notas</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Extração de Dados Cadastrais</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
+                <div className="mt-0.5 p-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-md">
+                  <Wrench className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Ferramentas</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-2 text-xs text-gray-600 dark:text-gray-400 mt-1.5">
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Agente Analista Fiscal</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Agente Resumo Contábil</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Conector ERP Sankhya</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Conector Salesforce</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Template API - Busca CEP</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Questionário - Onboarding</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={() => setPackageView('list')}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleCreatePackage}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Criar Pacote
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // DEFAULT VIEW: SETTINGS TABS & MAIN TABLE
   return (
     <div className="flex flex-col gap-6 min-h-[calc(100vh-8rem)]">
       {/* Top Tabs */}
@@ -167,7 +375,7 @@ export default function Settings() {
         <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Configurações</h2>
         <nav className="flex items-center gap-2 border-b border-gray-200 dark:border-border-dark overflow-x-auto">
           <button
-            onClick={() => setActiveTab('geral')}
+            onClick={() => { setActiveTab('geral'); setPackageView('list'); }}
             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'geral' 
               ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
@@ -178,7 +386,7 @@ export default function Settings() {
             Geral
           </button>
           <button
-            onClick={() => setActiveTab('modelos')}
+            onClick={() => { setActiveTab('modelos'); setPackageView('list'); }}
             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'modelos' 
               ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
@@ -189,7 +397,7 @@ export default function Settings() {
             Modelos de IA
           </button>
           <button
-            onClick={() => setActiveTab('ocr')}
+            onClick={() => { setActiveTab('ocr'); setPackageView('list'); }}
             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'ocr' 
               ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
@@ -200,7 +408,7 @@ export default function Settings() {
             OCR
           </button>
           <button
-            onClick={() => setActiveTab('chaves')}
+            onClick={() => { setActiveTab('chaves'); setPackageView('list'); }}
             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'chaves' 
               ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
@@ -211,7 +419,7 @@ export default function Settings() {
             Chaves
           </button>
           <button
-            onClick={() => setActiveTab('pacotes')}
+            onClick={() => { setActiveTab('pacotes'); setPackageView('list'); }}
             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium whitespace-nowrap ${
               activeTab === 'pacotes' 
               ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400' 
@@ -383,10 +591,10 @@ export default function Settings() {
 
               {/* Table body */}
               <div className="flex-1 overflow-auto">
-                {keys.map((keyItem, index) => (
+                {keys.map((keyItem) => (
                   <div 
                     key={keyItem.id} 
-                    className={`flex items-center px-4 py-3 group border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors`}
+                    className="flex items-center px-4 py-3 group border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors"
                   >
                     <div className="w-12 flex justify-center">
                       <input 
@@ -423,6 +631,7 @@ export default function Settings() {
           </div>
         )}
 
+        {/* PACOTES DE METADADOS - DESIGN ORIGINAL PRESERVADO */}
         {activeTab === 'pacotes' && (
           <div className="space-y-6 flex flex-col h-full">
             <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-800 pb-4">
@@ -444,7 +653,7 @@ export default function Settings() {
                   Importar Pacote
                 </button>
                 <button 
-                  onClick={() => setIsPackageModalOpen(true)}
+                  onClick={() => setPackageView('create')}
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
@@ -491,12 +700,18 @@ export default function Settings() {
                           <RotateCcw className="w-4 h-4" />
                         </button>
                       )}
-                      <button className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Exportar pacote (Manifest.json)">
+                      <button 
+                        onClick={() => handleExportPackage(pkg)}
+                        className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                        title="Exportar pacote (Manifest.json)"
+                      >
                         <Download className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => { setPackageToDelete(pkg); setIsPackageDeleteModalOpen(true); }}
-                        className="text-gray-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Excluir">
+                        className="text-gray-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" 
+                        title="Excluir"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -515,7 +730,7 @@ export default function Settings() {
         )}
       </div>
 
-      {/* Add Modal */}
+      {/* Add Key Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-md overflow-hidden">
@@ -564,7 +779,7 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Key Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-md p-6 text-center flex flex-col items-center">
@@ -677,110 +892,7 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Create Package Modal */}
-      {isPackageModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-border-dark shrink-0">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Criar Pacote de Metadados</h3>
-              <button 
-                onClick={() => setIsPackageModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Pacote</label>
-                  <input type="text" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-background-dark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Pacote Financeiro Core" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Versão Semântica</label>
-                  <input type="text" className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-background-dark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 1.0.0" defaultValue="1.0.0" />
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Conteúdo do Pacote</h4>
-                  <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs px-2 py-0.5 rounded-full font-medium border border-blue-200 dark:border-blue-800/50">
-                    Exportação Completa
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Todos os recursos e configurações atuais serão empacotados. Abaixo o resumo dos itens que serão exportados mantendo todos os seus vínculos estruturais.
-                </p>
-                
-                <div className="space-y-3">
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
-                    <div className="mt-0.5 p-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md">
-                      <Users className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Acessos</h5>
-                      <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 6 Usuários</span>
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 3 Times</span>
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> 3 Perfis e Permissões</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
-                    <div className="mt-0.5 p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md">
-                      <GitMerge className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Esteiras de Processamento (Workflows)</h5>
-                      <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Workflow Aprovação de Notas</span>
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Extração de Dados Cadastrais</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800/30 flex items-start gap-3">
-                    <div className="mt-0.5 p-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-md">
-                      <Wrench className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Ferramentas</h5>
-                      <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 text-xs text-gray-600 dark:text-gray-400 mt-1.5">
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Agente Analista Fiscal</span>
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Agente Resumo Contábil</span>
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Conector ERP Sankhya</span>
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Conector Salesforce</span>
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Template API - Busca CEP</span>
-                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" /> Questionário - Onboarding</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 p-4 border-t border-gray-100 dark:border-border-dark shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsPackageModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPackageModalOpen(false)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Criar Pacote
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Import Conflict Modal */}
+      {/* Import Conflict Alert Modal */}
       {isImportModalOpen && packageToImport && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-lg p-6 flex flex-col">
