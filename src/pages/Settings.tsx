@@ -198,13 +198,10 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
   // Packages State
   const [packages, setPackages] = useState<MetadataPackage[]>(initialPackages);
   
-  // Create Package State (Centered on 1 Pipeline + Selected Tools)
-  const [newPackageName, setNewPackageName] = useState('Pacote Aprovação de Notas Fiscais');
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string>('pipe-1');
-  const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(
-    new Set(availablePipelines[0].tools.map(t => t.id))
-  );
-  const [toolSearchQuery, setToolSearchQuery] = useState('');
+  // Create Package State (Centered on 1 Pipeline + Accordion of Tools)
+  const [newPackageName, setNewPackageName] = useState('');
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>('');
+  const [isToolsAccordionOpen, setIsToolsAccordionOpen] = useState(false);
   const [pipelineSearchQuery, setPipelineSearchQuery] = useState('');
   const [isPipelineDropdownOpen, setIsPipelineDropdownOpen] = useState(false);
 
@@ -224,7 +221,7 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
   const [destinationTeamSearch, setDestinationTeamSearch] = useState('');
   const [selectedDestinationTeams, setSelectedDestinationTeams] = useState<string[]>(['Equipe Financeiro']);
 
-  const currentSelectedPipeline = availablePipelines.find(p => p.id === selectedPipelineId) || availablePipelines[0];
+  const currentSelectedPipeline = availablePipelines.find(p => p.id === selectedPipelineId) || null;
 
   const filteredPipelines = availablePipelines.filter(pipe =>
     pipe.name.toLowerCase().includes(pipelineSearchQuery.toLowerCase()) ||
@@ -232,47 +229,11 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
     pipe.originTeams.some(team => team.toLowerCase().includes(pipelineSearchQuery.toLowerCase()))
   );
 
-  const filteredPipelineTools = currentSelectedPipeline.tools.filter(tool => 
-    tool.name.toLowerCase().includes(toolSearchQuery.toLowerCase()) ||
-    tool.type.toLowerCase().includes(toolSearchQuery.toLowerCase())
-  );
-
   const handlePipelineSelect = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
-    setToolSearchQuery('');
     const pipe = availablePipelines.find(p => p.id === pipelineId);
     if (pipe) {
       setNewPackageName(`Pacote ${pipe.name}`);
-      // By default select all tools of this pipeline, user can deselect
-      setSelectedToolIds(new Set(pipe.tools.map(t => t.id)));
-    }
-  };
-
-  const toggleToolSelection = (toolId: string) => {
-    const newSelected = new Set(selectedToolIds);
-    if (newSelected.has(toolId)) {
-      newSelected.delete(toolId);
-    } else {
-      newSelected.add(toolId);
-    }
-    setSelectedToolIds(newSelected);
-  };
-
-  const selectAllTools = () => {
-    if (toolSearchQuery.trim()) {
-      const idsToAdd = filteredPipelineTools.map(t => t.id);
-      setSelectedToolIds(new Set([...selectedToolIds, ...idsToAdd]));
-    } else {
-      setSelectedToolIds(new Set(currentSelectedPipeline.tools.map(t => t.id)));
-    }
-  };
-
-  const deselectAllTools = () => {
-    if (toolSearchQuery.trim()) {
-      const filteredIds = new Set(filteredPipelineTools.map(t => t.id));
-      setSelectedToolIds(new Set([...selectedToolIds].filter(id => !filteredIds.has(id))));
-    } else {
-      setSelectedToolIds(new Set());
     }
   };
 
@@ -441,13 +402,12 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
   };
 
   const handleCreatePackage = () => {
+    if (!currentSelectedPipeline) return;
     const pkgName = newPackageName.trim() || `Pacote ${currentSelectedPipeline.name}`;
     const pkgSlug = 'pkg-' + pkgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     
-    // Selected tools names
-    const toolsSelectedNames = currentSelectedPipeline.tools
-      .filter(t => selectedToolIds.has(t.id))
-      .map(t => t.name);
+    // All tools from the selected pipeline are automatically included
+    const toolsSelectedNames = currentSelectedPipeline.tools.map(t => t.name);
 
     const newPkg: MetadataPackage = {
       id: `uuid-pkg-${Date.now().toString(36)}`,
@@ -522,7 +482,7 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Criar Pacote de Metadados</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Gere um pacote baseado em 1 esteira e selecione as ferramentas e dependências que deseja incluir
+                Gere um pacote baseado em 1 esteira com todas as suas ferramentas vinculadas
               </p>
             </div>
           </div>
@@ -537,7 +497,12 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
             <button
               type="button"
               onClick={handleCreatePackage}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
+              disabled={!currentSelectedPipeline}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm ${
+                !currentSelectedPipeline
+                  ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
               Criar Pacote
             </button>
@@ -579,10 +544,11 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                 className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-background-dark text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between gap-3 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="truncate font-semibold text-gray-900 dark:text-gray-100">{currentSelectedPipeline.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0">
-                    {currentSelectedPipeline.tools.length} ferramentas
-                  </span>
+                  {currentSelectedPipeline ? (
+                    <span className="truncate font-semibold text-gray-900 dark:text-gray-100">{currentSelectedPipeline.name}</span>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500 font-normal">Selecione uma esteira...</span>
+                  )}
                 </div>
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isPipelineDropdownOpen ? 'rotate-180 text-blue-600' : ''}`} />
               </button>
@@ -645,9 +611,6 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                                 <span className="font-semibold text-xs text-gray-900 dark:text-gray-100">
                                   {pipe.name}
                                 </span>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-blue-100/70 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 shrink-0">
-                                  {pipe.tools.length} ferramentas
-                                </span>
                               </div>
                               <div className="flex items-center gap-1.5">
                                 <span className="text-[10px] text-gray-400 font-medium">Times de Origem:</span>
@@ -679,128 +642,93 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
               )}
             </div>
 
-            {/* Selected Pipeline Info Card with Origin Teams */}
-            <div className="mt-3 p-3 bg-blue-50/60 dark:bg-blue-900/15 border border-blue-200/80 dark:border-blue-800/40 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-semibold text-blue-900 dark:text-blue-200 truncate">
-                  {currentSelectedPipeline.name}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 shrink-0">
-                  {currentSelectedPipeline.tools.length} ferramentas
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-gray-500 dark:text-gray-400 font-medium">Times de Origem:</span>
-                <div className="flex gap-1.5">
-                  {currentSelectedPipeline.originTeams.map((team) => (
-                    <span 
-                      key={team} 
-                      className="px-2 py-0.5 rounded text-[11px] font-semibold bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 shadow-xs"
-                    >
-                      {team}
-                    </span>
-                  ))}
+            {/* Selected Pipeline Info Card with Origin Teams (sem contadores repetidos) */}
+            {currentSelectedPipeline && (
+              <div className="mt-3 p-3 bg-blue-50/60 dark:bg-blue-900/15 border border-blue-200/80 dark:border-blue-800/40 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-semibold text-blue-900 dark:text-blue-200 truncate">
+                    {currentSelectedPipeline.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-gray-500 dark:text-gray-400 font-medium">Times de Origem:</span>
+                  <div className="flex gap-1.5">
+                    {currentSelectedPipeline.originTeams.map((team) => (
+                      <span 
+                        key={team} 
+                        className="px-2 py-0.5 rounded text-[11px] font-semibold bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 shadow-xs"
+                      >
+                        {team}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Seleção Granular de Ferramentas que tem naquela Esteira */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-3.5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Ferramentas e Dependências da Esteira
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Selecione quais agentes, conectores e questionários desta esteira farão parte do pacote.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold px-2.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full">
-                  {selectedToolIds.size} de {currentSelectedPipeline.tools.length} selecionadas
-                </span>
+          {/* Acordeon de Ferramentas da Esteira (Exibido somente quando a esteira for selecionada) */}
+          {currentSelectedPipeline ? (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-background-dark/40 shadow-2xs">
                 <button
                   type="button"
-                  onClick={selectAllTools}
-                  className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  onClick={() => setIsToolsAccordionOpen(!isToolsAccordionOpen)}
+                  className="w-full px-4 py-3.5 flex items-center justify-between gap-3 text-left hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors focus:outline-none"
                 >
-                  Selecionar Todas
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Ferramentas da Esteira
+                    </h4>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                      {currentSelectedPipeline.tools.length} ferramentas
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">
+                    <span>{isToolsAccordionOpen ? 'Ocultar lista' : 'Visualizar ferramentas'}</span>
+                    <ChevronDown 
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                        isToolsAccordionOpen ? 'rotate-180 text-blue-600' : ''
+                      }`} 
+                    />
+                  </div>
                 </button>
-                <span className="text-gray-300 dark:text-gray-600">|</span>
-                <button
-                  type="button"
-                  onClick={deselectAllTools}
-                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 font-medium px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  Desmarcar Todas
-                </button>
-              </div>
-            </div>
 
-            {/* Campo de Busca de Ferramentas */}
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={toolSearchQuery}
-                onChange={(e) => setToolSearchQuery(e.target.value)}
-                placeholder="Buscar ferramenta ou tipo nesta esteira..."
-                className="w-full pl-9 pr-8 py-2 text-xs bg-white dark:bg-background-dark border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder:text-gray-400 shadow-2xs"
-              />
-              {toolSearchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setToolSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5"
-                  title="Limpar busca"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Tool Selection Cards Container - Scroll mostrando até 5 linhas */}
-            <div className="max-h-[224px] overflow-y-auto pr-1">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {filteredPipelineTools.map((tool) => {
-                  const isSelected = selectedToolIds.has(tool.id);
-                  return (
-                    <div
-                      key={tool.id}
-                      onClick={() => toggleToolSelection(tool.id)}
-                      className={`px-3 py-2 rounded-lg border cursor-pointer transition-all flex items-center justify-between gap-2.5 ${
-                        isSelected 
-                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600 shadow-2xs' 
-                          : 'bg-white dark:bg-background-dark/40 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 opacity-75 hover:opacity-100'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <input 
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {}} // handled by parent onClick
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
-                        />
-                        <span className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
-                          {tool.name}
-                        </span>
+                {isToolsAccordionOpen && (
+                  <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-800/80 space-y-3 bg-gray-50/30 dark:bg-gray-800/20">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Ferramentas vinculadas que farão parte deste pacote:
+                    </p>
+                    <div className="max-h-60 overflow-y-auto pr-1">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {currentSelectedPipeline.tools.map((tool) => (
+                          <div
+                            key={tool.id}
+                            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark/70 flex items-center justify-between gap-2.5 shadow-2xs"
+                          >
+                            <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
+                              {tool.name}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0 border border-gray-200/60 dark:border-gray-700/60">
+                              {tool.type}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 shrink-0 border border-gray-200/60 dark:border-gray-700/60">
-                        {tool.type}
-                      </span>
                     </div>
-                  );
-                })}
-
-                {filteredPipelineTools.length === 0 && (
-                  <div className="col-span-1 md:col-span-2 py-8 text-center text-xs text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-800/30 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
-                    Nenhuma ferramenta encontrada para "{toolSearchQuery}".
                   </div>
                 )}
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
+              <div className="p-4 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/20 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Selecione uma esteira base acima para visualizar a quantidade e a lista de ferramentas vinculadas.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-5 border-t border-gray-100 dark:border-gray-800">
             <button
@@ -813,7 +741,12 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
             <button
               type="button"
               onClick={handleCreatePackage}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
+              disabled={!currentSelectedPipeline}
+              className={`px-5 py-2 rounded-md text-sm font-medium transition-colors shadow-sm ${
+                !currentSelectedPipeline
+                  ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
               Criar Pacote da Esteira
             </button>
@@ -1108,7 +1041,14 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                   Importar Pacote
                 </button>
                 <button 
-                  onClick={() => setPackageView('create')}
+                  onClick={() => {
+                    setSelectedPipelineId('');
+                    setNewPackageName('');
+                    setIsToolsAccordionOpen(false);
+                    setIsPipelineDropdownOpen(false);
+                    setPipelineSearchQuery('');
+                    setPackageView('create');
+                  }}
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
