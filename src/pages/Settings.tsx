@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { 
   Settings as SettingsIcon, Cpu, Scan, Key, Save, Copy, Plus, X, 
-  Trash2, Package, Upload, Download, AlertCircle, RotateCcw, 
+  Trash2, Package, Upload, Download, AlertCircle, AlertTriangle, RotateCcw, 
   Users, GitMerge, CheckCircle2, ArrowLeft, Search, Check, Info,
-  ChevronDown, FileCode, Loader2
+  ChevronDown, FileCode, Loader2, RefreshCw, PlusCircle
 } from 'lucide-react';
 
 interface KeyToken {
@@ -20,6 +20,8 @@ interface MetadataPackage {
   lastUpdated: string;
   pipelineId?: string;
   pipelineName?: string;
+  pipelineIds?: string[];
+  pipelineNames?: string[];
   originTeams?: string[]; // Teams associated when generated in origin
   assignedDestinationTeams?: string[]; // Teams associated in destination tenant
   selectedTools?: string[];
@@ -167,6 +169,18 @@ const initialPackages: MetadataPackage[] = [
     assignedDestinationTeams: ['Equipe Jurídico'],
     selectedTools: ['Agente Extrator de Cláusulas de Rescisão', 'Conector DocuSign Signature']
   },
+  { 
+    id: 'uuid-pkg-4', 
+    name: 'financeiro', 
+    slug: 'pkg-financeiro', 
+    version: '1.0.0', 
+    lastUpdated: '05/10/2026',
+    pipelineId: 'pipe-1',
+    pipelineName: 'Workflow Aprovação de Notas Fiscais',
+    originTeams: ['Equipe Financeiro'],
+    assignedDestinationTeams: ['Equipe Financeiro'],
+    selectedTools: ['Agente Analista Fiscal (GPT-4 / Gemini)', 'Conector ERP Sankhya (REST)']
+  },
 ];
 
 const initialKeys: KeyToken[] = [
@@ -198,30 +212,44 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
   // Packages State
   const [packages, setPackages] = useState<MetadataPackage[]>(initialPackages);
   
-  // Create Package State (Centered on 1 Pipeline + Accordion of Tools)
+  // Create Package State (Centered on 1 or More Pipelines + Accordion of Tools)
   const [newPackageName, setNewPackageName] = useState('');
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string>('');
+  const [isPackageNameCustomized, setIsPackageNameCustomized] = useState(false);
+  const [selectedPipelineIds, setSelectedPipelineIds] = useState<string[]>([]);
   const [isToolsAccordionOpen, setIsToolsAccordionOpen] = useState(false);
   const [pipelineSearchQuery, setPipelineSearchQuery] = useState('');
   const [isPipelineDropdownOpen, setIsPipelineDropdownOpen] = useState(false);
 
   // Package Modals / States for actions
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [importStep, setImportStep] = useState<'reading_file' | 'configure'>('reading_file');
+  const [importStep, setImportStep] = useState<'upload' | 'loading' | 'configure'>('upload');
   const [importProgress, setImportProgress] = useState(0);
-  const [importFileName, setImportFileName] = useState('pacote-aprovacao-notas-fiscais.json');
-  const [importFileSize, setImportFileSize] = useState('38.4 KB');
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [importFileName, setImportFileName] = useState('');
+  const [importFileSize, setImportFileSize] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
+  const modalFileInputRef = React.useRef<HTMLInputElement>(null);
   
   const [isPackageDeleteModalOpen, setIsPackageDeleteModalOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<MetadataPackage | null>(null);
   const [packageToImport, setPackageToImport] = useState<MetadataPackage | null>(null);
+
+  // Package Conflict State (Sobreescrever / Criar novo / Cancelar importação)
+  const [packageConflict, setPackageConflict] = useState<{
+    actionType: 'create' | 'import';
+    conflictingExistingPackage: MetadataPackage;
+    pendingPackage: MetadataPackage;
+  } | null>(null);
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [packageFeedbackMessage, setPackageFeedbackMessage] = useState<string | null>(null);
   
   // Destination Teams Mapping & Search in Import Modal
   const [destinationTeamSearch, setDestinationTeamSearch] = useState('');
   const [selectedDestinationTeams, setSelectedDestinationTeams] = useState<string[]>(['Equipe Financeiro']);
 
-  const currentSelectedPipeline = availablePipelines.find(p => p.id === selectedPipelineId) || null;
+  const selectedPipelines = availablePipelines.filter(p => selectedPipelineIds.includes(p.id));
+  const totalTools = selectedPipelines.flatMap(p => p.tools);
+  const totalToolsCount = totalTools.length;
+  const uniqueOriginTeams = Array.from(new Set(selectedPipelines.flatMap(p => p.originTeams)));
 
   const filteredPipelines = availablePipelines.filter(pipe =>
     pipe.name.toLowerCase().includes(pipelineSearchQuery.toLowerCase()) ||
@@ -229,11 +257,42 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
     pipe.originTeams.some(team => team.toLowerCase().includes(pipelineSearchQuery.toLowerCase()))
   );
 
-  const handlePipelineSelect = (pipelineId: string) => {
-    setSelectedPipelineId(pipelineId);
-    const pipe = availablePipelines.find(p => p.id === pipelineId);
-    if (pipe) {
-      setNewPackageName(`Pacote ${pipe.name}`);
+  const togglePipelineSelect = (pipelineId: string) => {
+    let updated: string[];
+    if (selectedPipelineIds.includes(pipelineId)) {
+      updated = selectedPipelineIds.filter(id => id !== pipelineId);
+    } else {
+      updated = [...selectedPipelineIds, pipelineId];
+    }
+    setSelectedPipelineIds(updated);
+
+    // Se o usuário já selecionou/digitou o nome do pacote ou já existe um nome definido, NÃO altera o nome do pacote
+    if (!isPackageNameCustomized && newPackageName.trim() === '') {
+      const pipes = availablePipelines.filter(p => updated.includes(p.id));
+      if (pipes.length === 1) {
+        setNewPackageName(`Pacote ${pipes[0].name}`);
+      } else if (pipes.length === 2) {
+        setNewPackageName(`Pacote ${pipes[0].name} e ${pipes[1].name}`);
+      } else if (pipes.length > 2) {
+        setNewPackageName(`Pacote Integrado (${pipes.length} Esteiras)`);
+      }
+    }
+  };
+
+  const selectAllPipelines = () => {
+    const allIds = availablePipelines.map(p => p.id);
+    setSelectedPipelineIds(allIds);
+    // Preserva o nome do pacote se já foi preenchido ou customizado
+    if (!isPackageNameCustomized && newPackageName.trim() === '') {
+      setNewPackageName(`Pacote Integrado (${availablePipelines.length} Esteiras)`);
+    }
+  };
+
+  const clearAllPipelines = () => {
+    setSelectedPipelineIds([]);
+    // Não apaga o nome do pacote se o usuário o personalizou ou digitou
+    if (!isPackageNameCustomized) {
+      setNewPackageName('');
     }
   };
 
@@ -291,88 +350,72 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
     return value.substring(0, 3) + '*'.repeat(value.length - 3);
   };
 
-  const handleSimulateImport = () => {
-    // Open import modal with JSON file opening simulation first
-    const packageSimulated: MetadataPackage = {
-      id: 'uuid-pkg-1',
-      name: 'Pacote Aprovação de Notas Fiscais',
-      slug: 'pkg-aprovacao-notas-fiscais',
-      version: '1.0.0',
-      lastUpdated: new Date().toLocaleDateString('pt-BR'),
-      pipelineId: 'pipe-1',
-      pipelineName: 'Workflow Aprovação de Notas Fiscais',
-      originTeams: ['Equipe Financeiro', 'Equipe Operações'],
-      selectedTools: [
-        'Agente Analista Fiscal (GPT-4 / Gemini)', 
-        'Agente Resumo Contábil', 
-        'Conector ERP Sankhya (REST)', 
-        'Conector Salesforce (API)',
-        'Template API - Busca CEP e IBGE', 
-        'Questionário - Checklist de Conformidade'
-      ]
-    };
-
-    setPackageToImport(packageSimulated);
+  const handleOpenImportModal = () => {
+    setImportStep('upload');
+    setImportProgress(0);
+    setImportFileName('');
+    setImportFileSize('');
+    setIsDragOver(false);
+    setPackageToImport(null);
     setSelectedDestinationTeams(['Equipe Financeiro']);
     setDestinationTeamSearch('');
-    setImportFileName('pacote-aprovacao-notas-fiscais.json');
-    setImportFileSize('38.4 KB');
-    setImportStep('reading_file');
-    setImportProgress(15);
     setIsImportModalOpen(true);
-
-    // Simulate opening and parsing the JSON file
-    let current = 15;
-    const interval = setInterval(() => {
-      current += 28;
-      if (current >= 100) {
-        setImportProgress(100);
-        clearInterval(interval);
-        setTimeout(() => {
-          setImportStep('configure');
-        }, 550);
-      } else {
-        setImportProgress(current);
-      }
-    }, 180);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImportFileName(file.name);
-      setImportFileSize(`${(file.size / 1024).toFixed(1)} KB`);
-      setImportStep('reading_file');
-      setImportProgress(25);
-      setIsImportModalOpen(true);
+  const processSelectedFile = (file: File) => {
+    setImportFileName(file.name);
+    setImportFileSize(`${(file.size / 1024).toFixed(1)} KB`);
+    setImportStep('loading');
+    setImportProgress(20);
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const parsed = JSON.parse(event.target?.result as string);
-          const pkg: MetadataPackage = {
-            id: parsed.id || `uuid-pkg-${Date.now().toString(36)}`,
-            name: parsed.name || file.name.replace(/\.json$/i, ''),
-            slug: parsed.slug || 'pkg-' + Date.now(),
-            version: '1.0.0',
-            lastUpdated: new Date().toLocaleDateString('pt-BR'),
-            pipelineId: parsed.pipeline?.id || 'pipe-1',
-            pipelineName: parsed.pipeline?.name || 'Workflow Aprovação de Notas Fiscais',
-            originTeams: parsed.originTeams || ['Equipe Financeiro', 'Equipe Operações'],
-            selectedTools: parsed.selectedTools || ['Agente Analista Fiscal (GPT-4 / Gemini)', 'Conector ERP Sankhya (REST)']
-          };
-          setPackageToImport(pkg);
-          setSelectedDestinationTeams(pkg.originTeams || ['Equipe Financeiro']);
-        } catch {
-          // fallback keeps simulated package
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        const pkg: MetadataPackage = {
+          id: parsed.id || `uuid-pkg-${Date.now().toString(36)}`,
+          name: parsed.name || file.name.replace(/\.json$/i, ''),
+          slug: parsed.slug || 'pkg-' + Date.now(),
+          version: parsed.version || '1.0.0',
+          lastUpdated: new Date().toLocaleDateString('pt-BR'),
+          pipelineId: parsed.pipeline?.id || 'pipe-1',
+          pipelineName: parsed.pipeline?.name || 'Workflow Aprovação de Notas Fiscais',
+          originTeams: parsed.originTeams || ['Equipe Financeiro', 'Equipe Operações'],
+          selectedTools: parsed.selectedTools || ['Agente Analista Fiscal (GPT-4 / Gemini)', 'Conector ERP Sankhya (REST)']
+        };
+        setPackageToImport(pkg);
+        setSelectedDestinationTeams(pkg.originTeams || ['Equipe Financeiro']);
+      } catch {
+        // Fallback for demo
+        setPackageToImport({
+          id: `uuid-pkg-${Date.now().toString(36)}`,
+          name: file.name.replace(/\.json$/i, '') || 'Pacote Importado',
+          slug: 'pkg-' + Date.now(),
+          version: '1.0.0',
+          lastUpdated: new Date().toLocaleDateString('pt-BR'),
+          pipelineId: 'pipe-1',
+          pipelineName: 'Workflow Aprovação de Notas Fiscais',
+          originTeams: ['Equipe Financeiro', 'Equipe Operações'],
+          selectedTools: ['Agente Analista Fiscal (GPT-4 / Gemini)', 'Conector ERP Sankhya (REST)']
+        });
+        setSelectedDestinationTeams(['Equipe Financeiro']);
+      }
+
+      let current = 25;
+      const interval = setInterval(() => {
+        current += 25;
+        if (current >= 100) {
+          setImportProgress(100);
+          clearInterval(interval);
+          setTimeout(() => {
+            setImportStep('configure');
+          }, 450);
+        } else {
+          setImportProgress(current);
         }
-        setImportProgress(100);
-        setTimeout(() => {
-          setImportStep('configure');
-        }, 500);
-      };
-      reader.readAsText(file);
-    }
+      }, 120);
+    };
+    reader.readAsText(file);
   };
 
   const toggleDestinationTeam = (teamName: string) => {
@@ -384,30 +427,49 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
   };
 
   const confirmImport = () => {
-    if (packageToImport) {
-      const updatedPackage: MetadataPackage = {
-        ...packageToImport,
-        assignedDestinationTeams: selectedDestinationTeams.length > 0 ? selectedDestinationTeams : ['Equipe Geral']
-      };
+    if (!packageToImport) return;
 
-      setPackages(packages.map(p => {
-        if (p.id === packageToImport.id) {
-          return updatedPackage;
-        }
-        return p;
-      }));
+    const updatedPackage: MetadataPackage = {
+      ...packageToImport,
+      assignedDestinationTeams: selectedDestinationTeams.length > 0 ? selectedDestinationTeams : ['Equipe Geral']
+    };
+
+    // Verificar se já existe pacote com mesmo ID ou mesmo nome (case-insensitive)
+    const existingConflict = packages.find(p => 
+      p.id.toLowerCase() === updatedPackage.id.toLowerCase() ||
+      p.name.trim().toLowerCase() === updatedPackage.name.trim().toLowerCase()
+    );
+
+    if (existingConflict) {
+      setPackageConflict({
+        actionType: 'import',
+        conflictingExistingPackage: existingConflict,
+        pendingPackage: updatedPackage
+      });
+      setIsConflictModalOpen(true);
+      return;
     }
+
+    setPackages([updatedPackage, ...packages]);
+    setPackageFeedbackMessage(`Pacote "${updatedPackage.name}" importado com sucesso!`);
+    setTimeout(() => setPackageFeedbackMessage(null), 4000);
     setIsImportModalOpen(false);
     setPackageToImport(null);
+    setImportStep('upload');
   };
 
   const handleCreatePackage = () => {
-    if (!currentSelectedPipeline) return;
-    const pkgName = newPackageName.trim() || `Pacote ${currentSelectedPipeline.name}`;
+    if (selectedPipelines.length === 0) return;
+    
+    const defaultPkgName = selectedPipelines.length === 1 
+      ? `Pacote ${selectedPipelines[0].name}`
+      : `Pacote Integrado (${selectedPipelines.length} Esteiras)`;
+
+    const pkgName = newPackageName.trim() || defaultPkgName;
     const pkgSlug = 'pkg-' + pkgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     
-    // All tools from the selected pipeline are automatically included
-    const toolsSelectedNames = currentSelectedPipeline.tools.map(t => t.name);
+    // All unique tools from the selected pipelines are automatically included
+    const toolsSelectedNames = Array.from(new Set(totalTools.map(t => t.name)));
 
     const newPkg: MetadataPackage = {
       id: `uuid-pkg-${Date.now().toString(36)}`,
@@ -415,15 +477,117 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
       slug: pkgSlug,
       version: '1.0.0',
       lastUpdated: new Date().toLocaleDateString('pt-BR'),
-      pipelineId: currentSelectedPipeline.id,
-      pipelineName: currentSelectedPipeline.name,
-      originTeams: [...currentSelectedPipeline.originTeams],
-      assignedDestinationTeams: [...currentSelectedPipeline.originTeams],
+      pipelineId: selectedPipelines.map(p => p.id).join(', '),
+      pipelineName: selectedPipelines.map(p => p.name).join(' + '),
+      pipelineIds: selectedPipelines.map(p => p.id),
+      pipelineNames: selectedPipelines.map(p => p.name),
+      originTeams: uniqueOriginTeams.length > 0 ? uniqueOriginTeams : ['Equipe Financeiro'],
+      assignedDestinationTeams: uniqueOriginTeams.length > 0 ? uniqueOriginTeams : ['Equipe Financeiro'],
       selectedTools: toolsSelectedNames
     };
 
+    // Verificar se já existe pacote com mesmo ID ou mesmo nome (case-insensitive)
+    const existingConflict = packages.find(p => 
+      p.id.toLowerCase() === newPkg.id.toLowerCase() ||
+      p.name.trim().toLowerCase() === pkgName.trim().toLowerCase()
+    );
+
+    if (existingConflict) {
+      setPackageConflict({
+        actionType: 'create',
+        conflictingExistingPackage: existingConflict,
+        pendingPackage: newPkg
+      });
+      setIsConflictModalOpen(true);
+      return;
+    }
+
     setPackages([newPkg, ...packages]);
+    setPackageFeedbackMessage(`Pacote "${newPkg.name}" criado com sucesso!`);
+    setTimeout(() => setPackageFeedbackMessage(null), 4000);
     setPackageView('list');
+    setNewPackageName('');
+    setIsPackageNameCustomized(false);
+    setSelectedPipelineIds([]);
+  };
+
+  const handleResolveOverwrite = () => {
+    if (!packageConflict) return;
+    const { conflictingExistingPackage, pendingPackage, actionType } = packageConflict;
+
+    const overwrittenPackage: MetadataPackage = {
+      ...pendingPackage,
+      id: conflictingExistingPackage.id,
+      version: conflictingExistingPackage.version || '1.0.0',
+      lastUpdated: new Date().toLocaleDateString('pt-BR')
+    };
+
+    setPackages(packages.map(p => 
+      (p.id === conflictingExistingPackage.id || p.name.trim().toLowerCase() === conflictingExistingPackage.name.trim().toLowerCase())
+        ? overwrittenPackage
+        : p
+    ));
+
+    setPackageFeedbackMessage(`Pacote "${overwrittenPackage.name}" sobrescrito com sucesso!`);
+    setTimeout(() => setPackageFeedbackMessage(null), 4000);
+
+    setIsConflictModalOpen(false);
+    setPackageConflict(null);
+
+    if (actionType === 'create') {
+      setPackageView('list');
+      setNewPackageName('');
+      setIsPackageNameCustomized(false);
+      setSelectedPipelineIds([]);
+    } else {
+      setIsImportModalOpen(false);
+      setPackageToImport(null);
+      setImportStep('upload');
+    }
+  };
+
+  const handleResolveCreateNew = () => {
+    if (!packageConflict) return;
+    const { pendingPackage, actionType } = packageConflict;
+
+    // Gerar nome único incrementando sufixo numérico caso o nome coincida
+    let newName = pendingPackage.name;
+    let counter = 1;
+    while (packages.some(p => p.name.trim().toLowerCase() === newName.trim().toLowerCase())) {
+      newName = `${pendingPackage.name} (${counter})`;
+      counter++;
+    }
+
+    const uniqueNewPkg: MetadataPackage = {
+      ...pendingPackage,
+      id: `uuid-pkg-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      name: newName,
+      slug: 'pkg-' + newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      lastUpdated: new Date().toLocaleDateString('pt-BR')
+    };
+
+    setPackages([uniqueNewPkg, ...packages]);
+    setPackageFeedbackMessage(`Novo pacote "${uniqueNewPkg.name}" criado com sucesso!`);
+    setTimeout(() => setPackageFeedbackMessage(null), 4000);
+
+    setIsConflictModalOpen(false);
+    setPackageConflict(null);
+
+    if (actionType === 'create') {
+      setPackageView('list');
+      setNewPackageName('');
+      setIsPackageNameCustomized(false);
+      setSelectedPipelineIds([]);
+    } else {
+      setIsImportModalOpen(false);
+      setPackageToImport(null);
+      setImportStep('upload');
+    }
+  };
+
+  const handleResolveCancel = () => {
+    setIsConflictModalOpen(false);
+    setPackageConflict(null);
   };
 
   const handleExportPackage = (pkg: MetadataPackage) => {
@@ -471,7 +635,12 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
         <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => setPackageView('list')}
+              onClick={() => {
+                setPackageView('list');
+                setIsPackageNameCustomized(false);
+                setNewPackageName('');
+                setSelectedPipelineIds([]);
+              }}
               className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
               title="Voltar para Pacotes"
             >
@@ -482,14 +651,19 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Criar Pacote de Metadados</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Gere um pacote baseado em 1 esteira com todas as suas ferramentas vinculadas
+                Gere um pacote baseado em uma ou mais esteiras com todas as suas ferramentas vinculadas
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setPackageView('list')}
+              onClick={() => {
+                setPackageView('list');
+                setIsPackageNameCustomized(false);
+                setNewPackageName('');
+                setSelectedPipelineIds([]);
+              }}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
             >
               Cancelar
@@ -497,14 +671,14 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
             <button
               type="button"
               onClick={handleCreatePackage}
-              disabled={!currentSelectedPipeline}
+              disabled={selectedPipelines.length === 0}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm ${
-                !currentSelectedPipeline
+                selectedPipelines.length === 0
                   ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
             >
-              Criar Pacote
+              {selectedPipelines.length > 1 ? `Criar Pacote (${selectedPipelines.length} Esteiras)` : 'Criar Pacote'}
             </button>
           </div>
         </div>
@@ -513,41 +687,90 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
         <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm space-y-6">
           {/* Identificação: Nome do Pacote */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Nome do Pacote
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Nome do Pacote
+              </label>
+              {isPackageNameCustomized && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPackageNameCustomized(false);
+                    if (selectedPipelines.length === 0) {
+                      setNewPackageName('');
+                    } else if (selectedPipelines.length === 1) {
+                      setNewPackageName(`Pacote ${selectedPipelines[0].name}`);
+                    } else if (selectedPipelines.length === 2) {
+                      setNewPackageName(`Pacote ${selectedPipelines[0].name} e ${selectedPipelines[1].name}`);
+                    } else {
+                      setNewPackageName(`Pacote Integrado (${selectedPipelines.length} Esteiras)`);
+                    }
+                  }}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Sugerir automaticamente com base nas esteiras
+                </button>
+              )}
+            </div>
             <input 
               type="text" 
               value={newPackageName}
-              onChange={(e) => setNewPackageName(e.target.value)}
+              onChange={(e) => {
+                setNewPackageName(e.target.value);
+                setIsPackageNameCustomized(true);
+              }}
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-background-dark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
-              placeholder="Ex: Pacote Aprovação de Notas Fiscais" 
+              placeholder={selectedPipelines.length > 1 ? `Ex: Pacote Integrado (${selectedPipelines.length} Esteiras)` : 'Ex: Pacote Aprovação de Notas Fiscais'} 
               autoFocus
             />
+            {newPackageName.trim() && packages.some(p => p.name.trim().toLowerCase() === newPackageName.trim().toLowerCase()) && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>Já existe um pacote chamado "{packages.find(p => p.name.trim().toLowerCase() === newPackageName.trim().toLowerCase())?.name}". Ao criar, você poderá escolher entre sobreescrever, criar novo ou cancelar importação.</span>
+              </div>
+            )}
           </div>
 
-          {/* Seleção de 1 Esteira Base */}
+          {/* Seleção de Esteiras */}
           <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
-            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
-              <GitMerge className="w-4 h-4 text-blue-600" />
-              Selecione a Esteira Base do Pacote
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <GitMerge className="w-4 h-4 text-blue-600" />
+                Selecione a(s) Esteira(s) do Pacote
+              </label>
+              {selectedPipelines.length > 0 && (
+                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                  {selectedPipelines.length} {selectedPipelines.length === 1 ? 'esteira selecionada' : 'esteiras selecionadas'}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              O pacote será estruturado em torno desta esteira, encapsulando seu fluxo de execução e as ferramentas vinculadas a ela.
+              Você pode selecionar múltiplas esteiras. As ferramentas e fluxos de todas as esteiras selecionadas serão encapsulados no pacote.
             </p>
 
-            {/* Seletor com Busca para a Esteira Base */}
+            {/* Seletor Multi-Seleção de Esteiras */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
                 className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-background-dark text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center justify-between gap-3 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  {currentSelectedPipeline ? (
-                    <span className="truncate font-semibold text-gray-900 dark:text-gray-100">{currentSelectedPipeline.name}</span>
+                <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                  {selectedPipelines.length === 0 ? (
+                    <span className="text-gray-400 dark:text-gray-500 font-normal">Selecione uma ou mais esteiras...</span>
                   ) : (
-                    <span className="text-gray-400 dark:text-gray-500 font-normal">Selecione uma esteira...</span>
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {selectedPipelines.length === 1 
+                          ? selectedPipelines[0].name 
+                          : `${selectedPipelines.length} esteiras selecionadas`}
+                      </span>
+                      {selectedPipelines.length > 1 && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline truncate">
+                          ({selectedPipelines.map(p => p.name).join(', ')})
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isPipelineDropdownOpen ? 'rotate-180 text-blue-600' : ''}`} />
@@ -561,17 +784,17 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                     onClick={() => setIsPipelineDropdownOpen(false)}
                   />
 
-                  {/* Dropdown Menu com Busca */}
+                  {/* Dropdown Menu com Busca e Ações Rápidas */}
                   <div className="absolute top-full left-0 right-0 mt-1.5 z-30 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                    {/* Campo de Busca de Esteiras */}
-                    <div className="p-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40">
-                      <div className="relative">
+                    {/* Campo de Busca de Esteiras e Ações */}
+                    <div className="p-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 flex items-center justify-between gap-2">
+                      <div className="relative flex-1">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           type="text"
                           value={pipelineSearchQuery}
                           onChange={(e) => setPipelineSearchQuery(e.target.value)}
-                          placeholder="Buscar esteira por nome ou times de origem..."
+                          placeholder="Buscar esteiras por nome ou time..."
                           className="w-full pl-9 pr-8 py-2 text-xs bg-white dark:bg-background-dark border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder:text-gray-400"
                           autoFocus
                         />
@@ -586,35 +809,56 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                           </button>
                         )}
                       </div>
+                      <div className="flex items-center gap-1.5 shrink-0 text-xs">
+                        <button
+                          type="button"
+                          onClick={selectAllPipelines}
+                          className="px-2.5 py-1.5 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                        >
+                          Selecionar todas
+                        </button>
+                        {selectedPipelineIds.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={clearAllPipelines}
+                            className="px-2 py-1.5 rounded-md font-medium text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                          >
+                            Limpar
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Lista Rolável de Esteiras Filtradas */}
+                    {/* Lista de Esteiras com Checkbox */}
                     <div className="max-h-64 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/60 p-1">
                       {filteredPipelines.map((pipe) => {
-                        const isSelected = pipe.id === selectedPipelineId;
+                        const isSelected = selectedPipelineIds.includes(pipe.id);
                         return (
                           <div
                             key={pipe.id}
-                            onClick={() => {
-                              handlePipelineSelect(pipe.id);
-                              setIsPipelineDropdownOpen(false);
-                              setPipelineSearchQuery('');
-                            }}
+                            onClick={() => togglePipelineSelect(pipe.id)}
                             className={`p-2.5 rounded-lg cursor-pointer transition-colors flex items-center justify-between gap-3 ${
                               isSelected 
                                 ? 'bg-blue-50/80 dark:bg-blue-900/25 text-blue-900 dark:text-blue-100' 
                                 : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 text-gray-800 dark:text-gray-200'
                             }`}
                           >
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-xs text-gray-900 dark:text-gray-100">
+                            <div className="flex items-start gap-3 min-w-0 flex-1">
+                              <input 
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}} // handled by parent click
+                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-0.5 cursor-pointer"
+                              />
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <div className="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate">
                                   {pipe.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-gray-400 font-medium">Times de Origem:</span>
-                                <div className="flex gap-1 flex-wrap">
+                                </div>
+                                <div className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1">
+                                  {pipe.description}
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                  <span className="text-[10px] text-gray-400 font-medium">Times:</span>
                                   {pipe.originTeams.map(team => (
                                     <span key={team} className="text-[10px] text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded font-medium">
                                       {team}
@@ -623,7 +867,6 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                                 </div>
                               </div>
                             </div>
-
                             {isSelected && (
                               <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                             )}
@@ -637,38 +880,79 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                         </div>
                       )}
                     </div>
+
+                    {/* Footer do Dropdown */}
+                    <div className="p-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/50 flex items-center justify-between text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        {selectedPipelineIds.length} de {availablePipelines.length} esteiras selecionadas
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsPipelineDropdownOpen(false)}
+                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-xs transition-colors"
+                      >
+                        Concluir
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
             </div>
 
-            {/* Selected Pipeline Info Card with Origin Teams (sem contadores repetidos) */}
-            {currentSelectedPipeline && (
-              <div className="mt-3 p-3 bg-blue-50/60 dark:bg-blue-900/15 border border-blue-200/80 dark:border-blue-800/40 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold text-blue-900 dark:text-blue-200 truncate">
-                    {currentSelectedPipeline.name}
+            {/* Cards de Resumo das Esteiras Selecionadas */}
+            {selectedPipelines.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-0.5">
+                  <span className="font-medium">
+                    Esteiras adicionadas ao pacote ({selectedPipelines.length}):
                   </span>
+                  {selectedPipelines.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={clearAllPipelines}
+                      className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      Remover todas
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium">Times de Origem:</span>
-                  <div className="flex gap-1.5">
-                    {currentSelectedPipeline.originTeams.map((team) => (
-                      <span 
-                        key={team} 
-                        className="px-2 py-0.5 rounded text-[11px] font-semibold bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 shadow-xs"
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {selectedPipelines.map((pipe) => (
+                    <div 
+                      key={pipe.id}
+                      className="p-3 bg-blue-50/60 dark:bg-blue-900/15 border border-blue-200/80 dark:border-blue-800/40 rounded-lg flex items-center justify-between gap-3 text-xs shadow-2xs"
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="font-semibold text-blue-900 dark:text-blue-200 truncate">
+                          {pipe.name}
+                        </div>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Times:</span>
+                          {pipe.originTeams.map(t => (
+                            <span key={t} className="px-1.5 py-0.2 rounded text-[10px] bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-700/60">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => togglePipelineSelect(pipe.id)}
+                        className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-md hover:bg-white dark:hover:bg-gray-800 transition-colors shrink-0"
+                        title={`Remover ${pipe.name}`}
                       >
-                        {team}
-                      </span>
-                    ))}
-                  </div>
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Acordeon de Ferramentas da Esteira (Exibido somente quando a esteira for selecionada) */}
-          {currentSelectedPipeline ? (
+          {/* Acordeon de Ferramentas das Esteiras (Exibido somente quando houver esteira selecionada) */}
+          {selectedPipelines.length > 0 ? (
             <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
               <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-background-dark/40 shadow-2xs">
                 <button
@@ -678,10 +962,10 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                 >
                   <div className="flex flex-wrap items-center gap-3">
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Ferramentas da Esteira
+                      Ferramentas das Esteiras Selecionadas
                     </h4>
                     <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                      {currentSelectedPipeline.tools.length} ferramentas
+                      {totalToolsCount} ferramentas
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">
@@ -695,26 +979,44 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                 </button>
 
                 {isToolsAccordionOpen && (
-                  <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-800/80 space-y-3 bg-gray-50/30 dark:bg-gray-800/20">
+                  <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-800/80 space-y-4 bg-gray-50/30 dark:bg-gray-800/20">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Ferramentas vinculadas que farão parte deste pacote:
+                      {selectedPipelines.length === 1 
+                        ? 'Ferramentas vinculadas que farão parte deste pacote:'
+                        : `Ferramentas vinculadas das ${selectedPipelines.length} esteiras selecionadas que farão parte deste pacote:`}
                     </p>
-                    <div className="max-h-60 overflow-y-auto pr-1">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {currentSelectedPipeline.tools.map((tool) => (
-                          <div
-                            key={tool.id}
-                            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark/70 flex items-center justify-between gap-2.5 shadow-2xs"
-                          >
-                            <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
-                              {tool.name}
-                            </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0 border border-gray-200/60 dark:border-gray-700/60">
-                              {tool.type}
-                            </span>
+                    
+                    <div className="max-h-80 overflow-y-auto pr-1 space-y-4">
+                      {selectedPipelines.map((pipe) => (
+                        <div key={pipe.id} className="space-y-2">
+                          {selectedPipelines.length > 1 && (
+                            <div className="flex items-center justify-between pb-1 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200">
+                              <span className="flex items-center gap-1.5">
+                                <GitMerge className="w-3.5 h-3.5 text-blue-600" />
+                                {pipe.name}
+                              </span>
+                              <span className="text-gray-400 font-normal text-[11px]">
+                                {pipe.tools.length} ferramentas
+                              </span>
+                            </div>
+                          )}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {pipe.tools.map((tool) => (
+                              <div
+                                key={tool.id}
+                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark/70 flex items-center justify-between gap-2.5 shadow-2xs"
+                              >
+                                <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
+                                  {tool.name}
+                                </span>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0 border border-gray-200/60 dark:border-gray-700/60">
+                                  {tool.type}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -724,7 +1026,7 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
             <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
               <div className="p-4 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/20 text-center">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Selecione uma esteira base acima para visualizar a quantidade e a lista de ferramentas vinculadas.
+                  Selecione uma ou mais esteiras acima para visualizar a quantidade e a lista de ferramentas vinculadas.
                 </p>
               </div>
             </div>
@@ -741,14 +1043,14 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
             <button
               type="button"
               onClick={handleCreatePackage}
-              disabled={!currentSelectedPipeline}
+              disabled={selectedPipelines.length === 0}
               className={`px-5 py-2 rounded-md text-sm font-medium transition-colors shadow-sm ${
-                !currentSelectedPipeline
+                selectedPipelines.length === 0
                   ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
             >
-              Criar Pacote da Esteira
+              {selectedPipelines.length > 1 ? `Criar Pacote (${selectedPipelines.length} Esteiras)` : 'Criar Pacote da Esteira'}
             </button>
           </div>
         </div>
@@ -1023,6 +1325,20 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
         {/* PACOTES DE METADADOS */}
         {activeTab === 'pacotes' && (
           <div className="space-y-6 flex flex-col h-full">
+            {packageFeedbackMessage && (
+              <div className="p-3.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-medium text-blue-700 dark:text-blue-300 flex items-center justify-between shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>{packageFeedbackMessage}</span>
+                </div>
+                <button 
+                  onClick={() => setPackageFeedbackMessage(null)}
+                  className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-200 p-0.5 rounded transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
             <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-800 pb-4">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -1034,7 +1350,7 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
               </div>
               <div className="flex gap-3">
                 <button 
-                  onClick={handleSimulateImport}
+                  onClick={handleOpenImportModal}
                   className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
                 >
                   <Upload className="w-4 h-4" />
@@ -1042,8 +1358,9 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                 </button>
                 <button 
                   onClick={() => {
-                    setSelectedPipelineId('');
+                    setSelectedPipelineIds([]);
                     setNewPackageName('');
+                    setIsPackageNameCustomized(false);
                     setIsToolsAccordionOpen(false);
                     setIsPipelineDropdownOpen(false);
                     setPipelineSearchQuery('');
@@ -1248,35 +1565,26 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
         </div>
       )}
 
-      {/* Hidden file input for real file selection */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        accept=".json,application/json" 
-        onChange={handleFileChange} 
-        className="hidden" 
-      />
-
-      {/* IMPORT MODAL: SIMULAÇÃO DE ABERTURA JSON SEGUIDO DO MODAL COM AS OPÇÕES */}
-      {isImportModalOpen && packageToImport && (
+      {/* IMPORT MODAL: ETAPA 1 (CAMPO DE UPLOAD) -> ETAPA 2 (LOADING) -> ETAPA 3 (CONFIGURAÇÃO) */}
+      {isImportModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-surface-dark rounded-xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             
-            {/* ETAPA 1: SIMULAÇÃO DE ABERTURA DO ARQUIVO JSON */}
-            {importStep === 'reading_file' && (
+            {/* ETAPA 1: CAMPO DE UPLOAD */}
+            {importStep === 'upload' && (
               <>
-                {/* Header Simulação */}
+                {/* Modal Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 dark:border-border-dark shrink-0">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                      <FileCode className="w-4 h-4" />
+                      <Upload className="w-4 h-4" />
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                        Abrindo Arquivo do Pacote
+                        Importar Pacote de Metadados
                       </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Lendo e validando estrutura do manifesto JSON
+                        Carregue o arquivo do pacote que deseja importar
                       </p>
                     </div>
                   </div>
@@ -1288,103 +1596,153 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
                   </button>
                 </div>
 
-                {/* Body Simulação */}
-                <div className="p-6 space-y-5">
+                {/* Modal Body - Campo de Upload */}
+                <div className="p-6 space-y-4">
+                  <input 
+                    type="file" 
+                    ref={modalFileInputRef} 
+                    accept=".json,application/json" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) processSelectedFile(file);
+                      e.target.value = '';
+                    }} 
+                    className="hidden" 
+                  />
+                  
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                    onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragOver(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) processSelectedFile(file);
+                    }}
+                    onClick={() => modalFileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 ${
+                      isDragOver 
+                        ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-900/30 scale-[0.99]' 
+                        : 'border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50/70 dark:hover:bg-gray-800/40 bg-gray-50/30 dark:bg-gray-800/20'
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-blue-100/70 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-2xs">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Clique para selecionar ou arraste o arquivo do pacote
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Formatos suportados: <span className="font-mono text-blue-600 dark:text-blue-400 font-medium">.json</span> (máx. 10MB)
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="mt-2 px-4 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md transition-colors"
+                    >
+                      Procurar no computador
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex items-center justify-end px-6 py-4 border-t border-gray-100 dark:border-border-dark shrink-0 bg-gray-50/50 dark:bg-gray-800/20">
+                  <button
+                    type="button"
+                    onClick={() => { setIsImportModalOpen(false); setPackageToImport(null); }}
+                    className="py-2 px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium text-xs transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ETAPA 2: LOADING DO PACOTE (SEM MOSTRAR JSON) */}
+            {importStep === 'loading' && (
+              <>
+                {/* Header Loading */}
+                <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 dark:border-border-dark shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                        Carregando Pacote de Metadados
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Processando arquivo e validando metadados...
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => { setIsImportModalOpen(false); setPackageToImport(null); setImportStep('upload'); }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Body Loading */}
+                <div className="p-8 space-y-6">
                   {/* Card do Arquivo */}
                   <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-800/60 bg-blue-50/50 dark:bg-blue-950/20 flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex flex-col items-center justify-center font-bold text-[10px] shadow-sm shrink-0">
+                    <div className="w-11 h-11 rounded-xl bg-blue-600 text-white flex flex-col items-center justify-center font-bold text-[10px] shadow-sm shrink-0">
                       <FileCode className="w-5 h-5 mb-0.5" />
                       <span>JSON</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                          {importFileName}
+                          {importFileName || 'pacote.json'}
                         </span>
                         <span className="text-xs font-mono text-gray-500 dark:text-gray-400 shrink-0">
-                          {importFileSize}
+                          {importFileSize || '38 KB'}
                         </span>
                       </div>
                       <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                        Manifesto de metadados da esteira de processamento
+                        Pacote de metadados da esteira
                       </p>
                     </div>
                   </div>
 
-                  {/* Barra de Progresso e Status da Validação */}
-                  <div className="space-y-2">
+                  {/* Barra de Progresso e Status do Loading */}
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-xs font-medium">
-                      <span className="text-gray-600 dark:text-gray-300 flex items-center gap-1.5">
-                        {importProgress < 100 ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-                            Lendo e validando estrutura do JSON...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                            Arquivo JSON verificado com sucesso!
-                          </>
-                        )}
+                      <span className="text-gray-600 dark:text-gray-300 flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                        {importProgress < 100 ? 'Processando e validando estrutura...' : 'Estrutura validada com sucesso!'}
                       </span>
                       <span className="font-mono text-blue-600 dark:text-blue-400 font-semibold">
                         {importProgress}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden border border-gray-200/50 dark:border-gray-700">
+                    <div className="w-full bg-gray-100 dark:bg-gray-800 h-2.5 rounded-full overflow-hidden border border-gray-200/50 dark:border-gray-700">
                       <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-200 ease-out"
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-200 ease-out"
                         style={{ width: `${importProgress}%` }}
                       />
                     </div>
                   </div>
-
-                  {/* Prévia da Estrutura do Manifesto JSON Lido */}
-                  <div className="bg-gray-900 rounded-lg p-3 text-[11px] font-mono text-gray-300 border border-gray-800 space-y-1 overflow-x-auto shadow-inner">
-                    <div className="text-gray-500 flex items-center justify-between border-b border-gray-800 pb-1.5 mb-1.5">
-                      <span>manifest_preview.json</span>
-                      <span className="text-emerald-400 text-[10px]">json válido</span>
-                    </div>
-                    <p><span className="text-purple-400">"package_name"</span>: <span className="text-emerald-300">"{packageToImport.name}"</span>,</p>
-                    <p><span className="text-purple-400">"pipeline"</span>: <span className="text-emerald-300">"{packageToImport.pipelineName}"</span>,</p>
-                    <p><span className="text-purple-400">"origin_teams"</span>: [<span className="text-amber-300">{packageToImport.originTeams?.map(t => `"${t}"`).join(', ')}</span>],</p>
-                    <p><span className="text-purple-400">"tools_count"</span>: <span className="text-cyan-300">{packageToImport.selectedTools?.length || 6}</span></p>
-                  </div>
                 </div>
 
-                {/* Footer Simulação */}
-                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-border-dark shrink-0 bg-gray-50/50 dark:bg-gray-800/20">
+                {/* Footer Loading */}
+                <div className="flex items-center justify-end px-6 py-4 border-t border-gray-100 dark:border-border-dark shrink-0 bg-gray-50/50 dark:bg-gray-800/20">
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium hover:underline flex items-center gap-1.5"
+                    onClick={() => { setIsImportModalOpen(false); setPackageToImport(null); setImportStep('upload'); }}
+                    className="py-2 px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium text-xs transition-colors"
                   >
-                    <Upload className="w-3.5 h-3.5" />
-                    Escolher outro arquivo .json
+                    Cancelar
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { setIsImportModalOpen(false); setPackageToImport(null); }}
-                      className="py-1.5 px-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImportStep('configure')}
-                      className="py-1.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
-                    >
-                      <span>Continuar para Opções</span>
-                      <Check className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
                 </div>
               </>
             )}
 
-            {/* ETAPA 2: MODAL COM AS OPÇÕES E MAPEAMENTO DE TIMES */}
-            {importStep === 'configure' && (
+            {/* ETAPA 3: MODAL COM AS OPÇÕES E MAPEAMENTO DE TIMES */}
+            {importStep === 'configure' && packageToImport && (
               <>
                 {/* Modal Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 dark:border-border-dark shrink-0">
@@ -1531,6 +1889,88 @@ export default function Settings({ initialTab = 'geral', initialView = 'list' }:
               </>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFLITO DE PACOTE (SOBREESCREVER / CRIAR NOVO / CANCELAR IMPORTAÇÃO) */}
+      {isConflictModalOpen && packageConflict && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-surface-dark border border-amber-300 dark:border-amber-700/60 rounded-xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-amber-100 dark:border-amber-900/40 bg-amber-50/80 dark:bg-amber-950/20">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                  Conflito de Pacote de Metadados
+                </h3>
+              </div>
+              <button 
+                type="button"
+                onClick={handleResolveCancel}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-md transition-colors"
+                title="Fechar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg text-amber-900 dark:text-amber-200">
+                <p className="font-semibold text-sm">
+                  Já existe pacote com mesmo ID ou nome existente. Escolha a ação adequada:
+                </p>
+              </div>
+
+              {/* Informações detalhadas do conflito */}
+              <div className="bg-gray-50 dark:bg-background-dark/70 border border-gray-200 dark:border-gray-800 rounded-lg p-3.5 space-y-2.5 text-xs">
+                <div className="flex items-start justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Pacote Existente:</span>
+                  <div className="text-right font-medium text-gray-900 dark:text-gray-100">
+                    <div>{packageConflict.conflictingExistingPackage.name}</div>
+                    <div className="text-[11px] text-gray-400 font-mono">ID: {packageConflict.conflictingExistingPackage.id}</div>
+                  </div>
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-2 flex items-start justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Pacote Informado:</span>
+                  <div className="text-right font-medium text-blue-600 dark:text-blue-400">
+                    <div>{packageConflict.pendingPackage.name}</div>
+                    <div className="text-[11px] text-gray-400 font-mono">ID: {packageConflict.pendingPackage.id}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions: Sobreescrever pacote, criar novo ou cancelar importação */}
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 px-6 py-4 bg-gray-50/50 dark:bg-gray-800/20 border-t border-gray-100 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={handleResolveCancel}
+                className="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Cancelar importação</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleResolveCreateNew}
+                className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Criar novo</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleResolveOverwrite}
+                className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Sobreescrever pacote</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

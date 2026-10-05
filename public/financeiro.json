@@ -1,0 +1,19 @@
+{
+  "id": "uuid-pkg-4",
+  "name": "financeiro",
+  "slug": "pkg-financeiro",
+  "version": "1.0.0",
+  "lastUpdated": "05/10/2026",
+  "pipeline": {
+    "id": "pipe-1",
+    "name": "Workflow Aprovação de Notas Fiscais"
+  },
+  "originTeams": [
+    "Equipe Financeiro"
+  ],
+  "selectedTools": [
+    "Agente Analista Fiscal (GPT-4 / Gemini)",
+    "Conector ERP Sankhya (REST)"
+  ],
+  "exportMode": "pipeline_centric"
+}
