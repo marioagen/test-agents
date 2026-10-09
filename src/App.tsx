@@ -21,6 +21,7 @@ import Settings from './pages/Settings';
 import Pipelines from './pages/Pipelines';
 import ExtractionAnalysis from './pages/ExtractionAnalysis';
 import UserManagement from './pages/UserManagement';
+import DocumentUpload from './pages/DocumentUpload';
 
 function DesignSystem() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
           <Route path="/agentes/:id" element={<AgentForm />} />
           <Route path="/falhas" element={<Failures />} />
           <Route path="/esteiras" element={<Pipelines />} />
+          <Route path="/esteiras/novo" element={<DocumentUpload />} />
           <Route path="/analise-extracao" element={<ExtractionAnalysis />} />
           <Route path="/gestao-usuarios" element={<UserManagement />} />
           <Route path="/auditoria" element={<Audit />} />
@@ -71,7 +73,8 @@ export default function App() {
           <Route path="/pacotes" element={<Settings initialTab="pacotes" initialView="list" />} />
           <Route path="/pacotes/novo" element={<Settings initialTab="pacotes" initialView="create" />} />
           <Route path="/pacotes/importar" element={<Settings initialTab="pacotes" initialView="list" />} />
-          <Route path="/documents" element={<div className="p-8"><h1 className="text-2xl font-bold dark:text-white">Documents</h1><p className="text-gray-500 dark:text-gray-400 mt-2">Página em construção</p></div>} />
+          <Route path="/documents" element={<DocumentUpload />} />
+          <Route path="/documents/upload" element={<DocumentUpload />} />
         </Routes>
       </Layout>
     </Router>

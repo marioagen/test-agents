@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, Filter, Plus, List, LayoutGrid, ChevronDown, ChevronRight, 
   Trash2, Check, User as UserIcon, Building2, Calendar, FileText, ChevronUp, UserCheck, XCircle, MoreHorizontal, Play, ArrowRight
@@ -208,6 +209,7 @@ const mockCards: CardData[] = [
 ];
 
 export default function Pipelines() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('board');
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
@@ -357,7 +359,10 @@ export default function Pipelines() {
                   <List className="w-4 h-4" />
                 </button>
               </div>
-              <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+              <button 
+                onClick={() => navigate('/documents/upload?workflowId=3')}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-2xs"
+              >
                 <Plus className="w-4 h-4" />
                 Novo
               </button>
